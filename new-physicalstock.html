@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New Physical Stock Taking</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:Inter,system-ui,sans-serif;
+  background:#f3f4f6;color:#1f2937
+}
+.container{
+  max-width:900px;
+  margin:2.5rem auto;
+  padding:0 1rem
+}
+h1{margin-bottom:1.5rem}
+
+/* CARD */
+.card{
+  background:#fff;border-radius:10px;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+  padding:1.5rem
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:1rem
+}
+label{
+  font-size:.75rem;
+  color:#6b7280;
+  text-transform:uppercase;
+  letter-spacing:.05em
+}
+input{
+  width:100%;
+  padding:.5rem;
+  border:1px solid #d1d5db;
+  border-radius:6px
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:1rem
+}
+th,td{
+  border:1px solid #e5e7eb;
+  padding:.5rem;
+  text-align:center
+}
+th{background:#f9fafb}
+button{
+  border:none;border-radius:6px;
+  padding:.6rem 1.2rem;
+  cursor:pointer
+}
+.add{
+  background:#3b82f6;color:#fff;margin-top:1rem
+}
+.save{
+  background:#16a34a;color:#fff;margin-top:1.5rem
+}
+.remove{
+  background:#dc2626;color:#fff
+}
+.actions{text-align:right}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>New Physical Stock Taking</h1>
+
+  <div class="card">
+
+    <!-- HEADER FIELDS -->
+    <div class="grid">
+      <div>
+        <label>Date</label>
+        <input type="date" id="date">
+      </div>
+      <div>
+        <label>Division</label>
+        <input type="number" id="division">
+      </div>
+      <div>
+        <label>Location</label>
+        <input type="number" id="location">
+      </div>
+    </div>
+
+    <!-- ITEMS TABLE -->
+    <table id="itemsTable">
+      <thead>
+        <tr>
+          <th>Item Code</th>
+          <th>Unit</th>
+          <th>Qty</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <button class="add" onclick="addRow()">+ Add Item</button>
+
+    <div class="actions">
+      <button class="save" onclick="save()">Save Stock Taking</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const API_URL =
+  'https://script.google.com/macros/s/AKfycbzS-fjjgbKJxxKWaoTSO9rzvRFmbapf16Bn3rucnfBfcbOAcjCuSJlIibZrucugnmXmrA/exec';
+
+function addRow() {
+  const tbody = document.querySelector('#itemsTable tbody');
+  tbody.insertAdjacentHTML('beforeend', `
+    <tr>
+      <td><input></td>
+      <td><input></td>
+      <td><input type="number"></td>
+      <td><button class="remove" onclick="this.closest('tr').remove()">✕</button></td>
+    </tr>
+  `);
+}
+
+addRow(); // one default row
+
+function save() {
+  const date = document.getElementById('date').value;
+  const division = document.getElementById('division').value;
+  const location = document.getElementById('location').value;
+
+  const rows = [...document.querySelectorAll('#itemsTable tbody tr')];
+  if (!date || !division || !location || !rows.length) {
+    alert('Fill all fields');
+    return;
+  }
+
+  const stock = rows.map(r => {
+    const inputs = r.querySelectorAll('input');
+    return `(${inputs[0].value},${inputs[1].value},${inputs[2].value})`;
+  }).join(',');
+
+  fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify({
+      date,
+      division,
+      location,
+      stock
+    })
+  })
+  .then(r => r.json())
+  .then(j => {
+    if (j.status === 'success') {
+      alert('Saved successfully');
+      window.location.href = 'index.html';
+    } else {
+      alert(j.message);
+    }
+  });
+}
+</script>
+
+</body>
+</html>
