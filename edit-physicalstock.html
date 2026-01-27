@@ -182,9 +182,9 @@ function updateRecord() {
     body: JSON.stringify({
       action: 'update',
       recordId,
-      date: date.value,
-      division: division.value,
-      location: location.value,
+      date: document.getElementById('date').value,
+      division: document.getElementById('division').value,
+      location: document.getElementById('location').value, 
       stock
     })
   })
