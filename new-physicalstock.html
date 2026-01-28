@@ -12,7 +12,7 @@ body{
   background:#f3f4f6;color:#1f2937
 }
 .container{
-  max-width:900px;
+  max-width:1100px;
   margin:2.5rem auto;
   padding:0 1rem
 }
@@ -59,6 +59,10 @@ th,td{
   text-align:center
 }
 th{background:#f9fafb}
+td select, td input{
+  margin:0;
+  font-size:.875rem
+}
 button{
   border:none;border-radius:6px;
   padding:.6rem 1.2rem;
@@ -114,6 +118,7 @@ button{
       <thead>
         <tr>
           <th>Item Code</th>
+          <th>Description</th>
           <th>Unit</th>
           <th>Qty</th>
           <th></th>
@@ -135,6 +140,22 @@ button{
 const API_URL =
   'https://script.google.com/macros/s/AKfycbwxL3LROee-6fBVGDqMIuwN1UDRkUv55d--cLDrSepj7t0UkcOK352JLM73oye3rzHRow/exec';
 
+// Store configuration data with test data as fallback
+let configData = { 
+  items: [
+    { code: 'ITEM001', description: 'Laptop Dell Inspiron 15', Unit: 'PCS,BOX,PACK' },
+    { code: 'ITEM002', description: 'Desktop Computer HP', Unit: 'LTR,GALLON' },
+    { code: 'ITEM003', description: 'Wireless Mouse Logitech', Unit: 'PCS,BOX,PACK'},
+    { code: 'ITEM004', description: 'Keyboard Mechanical', Unit: 'LTR,GALLON' },
+    { code: 'ITEM005', description: 'Monitor 24 inch Samsung', Unit: 'PCS,BOX,PACK'},
+    { code: 'ITEM006', description: 'Office Chair Ergonomic', Unit: 'PCS,BOX,PACK' },
+    { code: 'ITEM007', description: 'Desk Lamp LED', Unit: 'LTR,GALLON' },
+    { code: 'ITEM008', description: 'USB Flash Drive 64GB', Unit: 'PCS,BOX,PACK' },
+    { code: 'ITEM009', description: 'Printer HP LaserJet', Unit: 'PCS,BOX,PACK'},
+    { code: 'ITEM010', description: 'Paper A4 Ream', Unit: 'LTR,GALLON' }
+  ] 
+};
+
 // Load configurations on page load
 window.addEventListener('DOMContentLoaded', loadConfigurations);
 
@@ -144,41 +165,108 @@ function loadConfigurations() {
   .then(j => {
     if (j.status === 'success') {
       const config = j.data;
-
-      // Populate Division dropdown
-      const divisionSelect = document.getElementById('division');
-      divisionSelect.innerHTML = '<option value="">Select Division</option>';
-      if (config.divisions) {
-        config.divisions.forEach(div => {
-          divisionSelect.innerHTML += `<option value="${div}">${div}</option>`;
-        });
+      
+      // Merge API data with test data (API data takes priority)
+      if (config.divisions && config.divisions.length > 0) {
+        configData.divisions = config.divisions;
+      }
+      if (config.locations && config.locations.length > 0) {
+        configData.locations = config.locations;
+      }
+      if (config.items && config.items.length > 0) {
+        configData.items = config.items;
       }
 
-      // Populate Location dropdown
-      const locationSelect = document.getElementById('location');
-      locationSelect.innerHTML = '<option value="">Select Location</option>';
-      if (config.locations) {
-        config.locations.forEach(loc => {
-          locationSelect.innerHTML += `<option value="${loc}">${loc}</option>`;
-        });
-      }
+      populateDropdowns();
     } else {
-      alert('Error loading configurations: ' + j.message);
+      alert('Using test data. Error loading configurations: ' + j.message);
+      populateDropdowns();
     }
   })
   .catch(err => {
     console.error('Error:', err);
-    alert('Failed to load configurations');
+    alert('Using test data. Failed to load configurations from API');
+    populateDropdowns();
   });
+}
+
+function populateDropdowns() {
+  // Populate Division dropdown
+  const divisionSelect = document.getElementById('division');
+  divisionSelect.innerHTML = '<option value="">Select Division</option>';
+  configData.divisions.forEach(div => {
+    divisionSelect.innerHTML += `<option value="${div}">${div}</option>`;
+  });
+
+  // Populate Location dropdown
+  const locationSelect = document.getElementById('location');
+  locationSelect.innerHTML = '<option value="">Select Location</option>';
+  configData.locations.forEach(loc => {
+    locationSelect.innerHTML += `<option value="${loc}">${loc}</option>`;
+  });
+}
+
+function getItemsDropdown() {
+  let html = '<option value="">Select Item</option>';
+  if (configData.items && configData.items.length > 0) {
+    configData.items.forEach(item => {
+      if (typeof item === 'string') {
+        html += `<option value="${item}">${item}</option>`;
+      } else if (item.code) {
+        html += `<option value="${item.code}">${item.code}</option>`;
+      }
+    });
+  }
+  return html;
+}
+
+function getUnitsForItem(itemCode) {
+  let html = '<option value="">Select Unit</option>';
+  
+  // Find the item in configData
+  const item = configData.items.find(i => i.code === itemCode);
+  
+  if (item && item.Unit) {
+    // Split the Unit string by comma and create options
+    const units = item.Unit.split(',').map(u => u.trim());
+    units.forEach(unit => {
+      html += `<option value="${unit}">${unit}</option>`;
+    });
+  }
+  
+  return html;
+}
+
+function onItemChange(selectElement) {
+  const row = selectElement.closest('tr');
+  const itemCode = selectElement.value;
+  
+  // Find the selected item
+  const item = configData.items.find(i => i.code === itemCode);
+  
+  if (item) {
+    // Fill description
+    const descriptionInput = row.querySelector('.description');
+    descriptionInput.value = item.description || '';
+    
+    // Update unit dropdown with item-specific units
+    const unitSelect = row.querySelector('.unit');
+    unitSelect.innerHTML = getUnitsForItem(itemCode);
+  } else {
+    // Clear description and unit if no item selected
+    row.querySelector('.description').value = '';
+    row.querySelector('.unit').innerHTML = '<option value="">Select Unit</option>';
+  }
 }
 
 function addRow() {
   const tbody = document.querySelector('#itemsTable tbody');
   tbody.insertAdjacentHTML('beforeend', `
     <tr>
-      <td><input></td>
-      <td><input></td>
-      <td><input type="number"></td>
+      <td><select class="item-code" onchange="onItemChange(this)">${getItemsDropdown()}</select></td>
+      <td><input class="description" placeholder="Description" readonly></td>
+      <td><select class="unit"><option value="">Select Unit</option></select></td>
+      <td><input type="number" class="qty" min="0" step="0.01"></td>
       <td><button class="remove" onclick="this.closest('tr').remove()">✕</button></td>
     </tr>
   `);
@@ -198,9 +286,21 @@ function save() {
   }
 
   const stock = rows.map(r => {
-    const inputs = r.querySelectorAll('input');
-    return `(${inputs[0].value},${inputs[1].value},${inputs[2].value})`;
-  }).join(',');
+    const itemCode = r.querySelector('.item-code').value;
+    const unit = r.querySelector('.unit').value;
+    const qty = r.querySelector('.qty').value;
+    
+    if (!itemCode || !unit || !qty) {
+      return null;
+    }
+    
+    return `(${itemCode},${unit},${qty})`;
+  }).filter(item => item !== null).join(',');
+
+  if (!stock) {
+    alert('Please fill in all item details');
+    return;
+  }
 
   fetch(API_URL, {
     method: 'POST',
