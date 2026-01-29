@@ -138,55 +138,51 @@ button{
 
 <script>
 const API_URL =
-  'https://script.google.com/macros/s/AKfycbwxL3LROee-6fBVGDqMIuwN1UDRkUv55d--cLDrSepj7t0UkcOK352JLM73oye3rzHRow/exec';
+  'https://script.google.com/macros/s/AKfycbysC5giI3quVYgXZJZTBUB0SOdYXMYH8TVGzE2l9PpAd0i3sOkqBcJ0JWE0QmWFdS19rg/exec';
 
 // Store configuration data with test data as fallback
-let configData = { 
-  items: [
-    { code: 'ITEM001', description: 'Laptop Dell Inspiron 15', Unit: 'PCS,BOX,PACK' },
-    { code: 'ITEM002', description: 'Desktop Computer HP', Unit: 'LTR,GALLON' },
-    { code: 'ITEM003', description: 'Wireless Mouse Logitech', Unit: 'PCS,BOX,PACK'},
-    { code: 'ITEM004', description: 'Keyboard Mechanical', Unit: 'LTR,GALLON' },
-    { code: 'ITEM005', description: 'Monitor 24 inch Samsung', Unit: 'PCS,BOX,PACK'},
-    { code: 'ITEM006', description: 'Office Chair Ergonomic', Unit: 'PCS,BOX,PACK' },
-    { code: 'ITEM007', description: 'Desk Lamp LED', Unit: 'LTR,GALLON' },
-    { code: 'ITEM008', description: 'USB Flash Drive 64GB', Unit: 'PCS,BOX,PACK' },
-    { code: 'ITEM009', description: 'Printer HP LaserJet', Unit: 'PCS,BOX,PACK'},
-    { code: 'ITEM010', description: 'Paper A4 Ream', Unit: 'LTR,GALLON' }
-  ] 
+window.configData = { 
+  items: [],
+  divisions: [],
+  locations: []
 };
 
 // Load configurations on page load
 window.addEventListener('DOMContentLoaded', loadConfigurations);
 
 function loadConfigurations() {
+  console.log('Starting to load configurations...');
+  
   fetch(API_URL + '?action=get_config')
   .then(r => r.json())
   .then(j => {
+    console.log('API Response:', j);
+    
     if (j.status === 'success') {
       const config = j.data;
       
-      // Merge API data with test data (API data takes priority)
-      if (config.divisions && config.divisions.length > 0) {
-        configData.divisions = config.divisions;
-      }
-      if (config.locations && config.locations.length > 0) {
-        configData.locations = config.locations;
-      }
-      if (config.items && config.items.length > 0) {
-        configData.items = config.items;
-      }
-
+      // Set API data to window.configData
+      window.configData.divisions = config.divisions || [];
+      window.configData.locations = config.locations || [];
+      window.configData.items = (config.items || []).map(item => ({
+        code: String(item.code),
+        description: item.description,
+        Unit: item.Unit
+      }));
+      
+      console.log('Final configData:', window.configData);
       populateDropdowns();
+      addRow(); // Move here
     } else {
-      alert('Using test data. Error loading configurations: ' + j.message);
+      console.error('API returned error:', j.message);
       populateDropdowns();
+      addRow();
     }
   })
   .catch(err => {
-    console.error('Error:', err);
-    alert('Using test data. Failed to load configurations from API');
+    console.error('Fetch error:', err);
     populateDropdowns();
+    addRow();
   });
 }
 
@@ -210,11 +206,9 @@ function getItemsDropdown() {
   let html = '<option value="">Select Item</option>';
   if (configData.items && configData.items.length > 0) {
     configData.items.forEach(item => {
-      if (typeof item === 'string') {
-        html += `<option value="${item}">${item}</option>`;
-      } else if (item.code) {
-        html += `<option value="${item.code}">${item.code}</option>`;
-      }
+      const code = String(item.code); // Ensure code is string
+      const display = `${code} - ${item.description || code}`;
+      html += `<option value="${code}">${display}</option>`;
     });
   }
   return html;
@@ -239,10 +233,10 @@ function getUnitsForItem(itemCode) {
 
 function onItemChange(selectElement) {
   const row = selectElement.closest('tr');
-  const itemCode = selectElement.value;
+  const itemCode = String(selectElement.value); // Convert to string
   
-  // Find the selected item
-  const item = configData.items.find(i => i.code === itemCode);
+  // Find the selected item (compare as strings)
+  const item = configData.items.find(i => String(i.code) === itemCode);
   
   if (item) {
     // Fill description
@@ -272,7 +266,7 @@ function addRow() {
   `);
 }
 
-addRow(); // one default row
+
 
 function save() {
   const date = document.getElementById('date').value;
