@@ -139,6 +139,30 @@ body{
 
 .hidden{display:none}
 
+/* ✅ NEW: Error/Info Messages */
+.message{
+  background:#fee2e2;
+  border-left:4px solid #ef4444;
+  padding:1rem;
+  border-radius:6px;
+  margin-bottom:1rem
+}
+.message.info{
+  background:#dbeafe;
+  border-left-color:#3b82f6
+}
+.message h3{
+  font-size:1rem;
+  margin-bottom:.5rem
+}
+
+/* ✅ NEW: Loading State */
+.loading{
+  text-align:center;
+  padding:2rem;
+  color:#6b7280
+}
+
 /* RESPONSIVE */
 @media(max-width:768px){
   .card-header{
@@ -167,14 +191,16 @@ body{
   </div>
 
   <!-- LIST -->
-  <div id="list"></div>
+  <div id="list">
+    <div class="loading">Loading...</div>
+  </div>
 
 </div>
 
 <script>
 /* ================= CONFIG ================= */
 const API_URL =
-  'https://script.google.com/macros/s/AKfycbwxL3LROee-6fBVGDqMIuwN1UDRkUv55d--cLDrSepj7t0UkcOK352JLM73oye3rzHRow/exec';
+  'https://script.google.com/macros/s/AKfycbx2XaEIRJ_S23ulC1zH9lf4A7iQxxemzZbPnyua8PszACMFrw1SQCpRmQfjWlnxvyZ_nQ/exec';
 
 /* ================= HELPERS ================= */
 function parseStock(str) {
@@ -190,6 +216,30 @@ function parseStock(str) {
 
 function toggle(id) {
   document.getElementById(id).classList.toggle('hidden');
+}
+
+/* ✅ NEW: Display Error Message */
+function showError(message, userEmail = '') {
+  const list = document.getElementById('list');
+  list.innerHTML = `
+    <div class="message">
+      <h3>⚠️ Access Denied</h3>
+      <p>${message}</p>
+      ${userEmail ? `<p style="margin-top:0.5rem"><strong>Your email:</strong> ${userEmail}</p>` : ''}
+      <p style="margin-top:0.5rem">Please contact the administrator to grant you access.</p>
+    </div>
+  `;
+}
+
+/* ✅ NEW: Display Info Message */
+function showInfo(message) {
+  const list = document.getElementById('list');
+  list.innerHTML = `
+    <div class="message info">
+      <h3>ℹ️ Information</h3>
+      <p>${message}</p>
+    </div>
+  `;
 }
 
 /* ================= DELETE ================= */
@@ -228,77 +278,109 @@ async function deleteRecord(recordId, cardElement) {
 
 /* ================= LOAD LIST ================= */
 async function loadList() {
-  const res = await fetch(API_URL);
-  const records = await res.json();
-  const list = document.getElementById('list');
+  try {
+    const res = await fetch(API_URL);
+    const data = await res.json();
 
-  list.innerHTML = '';
+    // ✅ CHECK: Handle error responses from authentication
+    if (data.status === 'error') {
+      showError(data.message, data.userEmail);
+      return;
+    }
 
-  records.forEach((r, i) => {
-    const items = parseStock(r.Text4);
-    const tableId = `items_${i}`;
-    const cardId = `card_${i}`;
+    // ✅ CHECK: Handle successful response with data array
+    let records;
+    if (data.status === 'success' && Array.isArray(data.data)) {
+      records = data.data;
+    } else if (Array.isArray(data)) {
+      // Legacy format (array directly)
+      records = data;
+    } else {
+      showError('Unexpected data format received from server');
+      return;
+    }
 
-    list.innerHTML += `
-      <div class="card" id="${cardId}">
-        <div class="card-header">
+    const list = document.getElementById('list');
 
-          <div class="field">
-            <label>Date</label>
-            <p>${r.Text1}</p>
+    // ✅ CHECK: No records found
+    if (records.length === 0) {
+      showInfo('No stock taking records found. Click the + button to create one.');
+      return;
+    }
+
+    list.innerHTML = '';
+
+    records.forEach((r, i) => {
+      const items = parseStock(r.Text4);
+      const tableId = `items_${i}`;
+      const cardId = `card_${i}`;
+
+      list.innerHTML += `
+        <div class="card" id="${cardId}">
+          <div class="card-header">
+
+            <div class="field">
+              <label>Date</label>
+              <p>${r.Text1}</p>
+            </div>
+
+            <div class="field">
+              <label>Division</label>
+              <p>${r.Text2}</p>
+            </div>
+
+            <div class="field">
+              <label>Location</label>
+              <p>${r.Text3}</p>
+            </div>
+
+            <div class="btn-group">
+              <button class="toggle-btn"
+                onclick="toggle('${tableId}')">View</button>
+
+              <button class="edit-btn"
+                onclick="window.location.href='edit-physicalstock.html?recordId=${r.Id}'">
+                Edit
+              </button>
+
+              <button class="delete-btn"
+                onclick="deleteRecord(${r.Id}, document.getElementById('${cardId}'))">
+                Delete
+              </button>
+            </div>
           </div>
 
-          <div class="field">
-            <label>Division</label>
-            <p>${r.Text2}</p>
-          </div>
-
-          <div class="field">
-            <label>Location</label>
-            <p>${r.Text3}</p>
-          </div>
-
-          <div class="btn-group">
-            <button class="toggle-btn"
-              onclick="toggle('${tableId}')">View</button>
-
-            <button class="edit-btn"
-              onclick="window.location.href='edit-physicalstock.html?recordId=${r.Id}'">
-              Edit
-            </button>
-
-            <button class="delete-btn"
-              onclick="deleteRecord(${r.Id}, document.getElementById('${cardId}'))">
-              Delete
-            </button>
-          </div>
-        </div>
-
-        <div id="${tableId}" class="hidden">
-          <div class="divider"></div>
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Item Code</th>
-                <th>Unit</th>
-                <th>Qty</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${items.map(it => `
+          <div id="${tableId}" class="hidden">
+            <div class="divider"></div>
+            <table class="table">
+              <thead>
                 <tr>
-                  <td>${it.code}</td>
-                  <td>${it.unit}</td>
-                  <td>${it.qty}</td>
+                  <th>Item Code</th>
+                  <th>Unit</th>
+                  <th>Qty</th>
                 </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                ${items.map(it => `
+                  <tr>
+                    <td>${it.code}</td>
+                    <td>${it.unit}</td>
+                    <td>${it.qty}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
 
-      </div>
-    `;
-  });
+        </div>
+      `;
+    });
+
+  } catch (err) {
+    // ✅ CATCH: Network or other errors
+    showError(`Failed to load data: ${err.message}`);
+    console.error('Error loading list:', err);
+  }
 }
 
 document.addEventListener('DOMContentLoaded', loadList);
