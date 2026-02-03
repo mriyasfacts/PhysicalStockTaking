@@ -5,7 +5,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Physical Stock Taking</title>
+<title>PHYSICAL STOCK TAKING</title>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -186,7 +186,7 @@ body{
 
   <!-- PAGE HEADER -->
   <div class="page-header">
-    <h1>Physical Stock Taking</h1>
+    <h1>PHYSICAL STOCK TAKING</h1>
     <button class="add-btn"
       title="New Physical Stock Taking"
       onclick="window.location.href='new-physicalstock.html'">+</button>
@@ -320,7 +320,11 @@ async function loadList() {
       list.innerHTML += `
         <div class="card" id="${cardId}">
           <div class="card-header">
-
+			
+			<div class="field">
+			<label>Document No</label>
+			<p>#${r.Id}</p>
+			</div>
             <div class="field">
               <label>Date</label>
               <p>${r.Text1}</p>
