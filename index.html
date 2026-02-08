@@ -1,181 +1,186 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PHYSICAL STOCK TAKING</title>
+<title>Inventory Management System - Home</title>
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{
-  font-family:Inter,system-ui,sans-serif;
-  background:#f3f4f6;color:#1f2937
-}
-.container{
-  max-width:1100px;
-  margin:2.5rem auto;
-  padding:0 1rem
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-/* HEADER */
-.page-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:2rem
-}
-.page-header h1{
-  font-size:1.8rem;
-  font-weight:700
-}
-.add-btn{
-  background:#16a34a;
-  color:#fff;
-  border:none;
-  border-radius:50%;
-  width:44px;
-  height:44px;
-  font-size:1.5rem;
-  cursor:pointer;
-  display:flex;
-  align-items:center;
-  justify-content:center
-}
-.add-btn:hover{background:#15803d}
-
-/* CARD */
-.card{
-  background:#fff;
-  border-radius:10px;
-  box-shadow:0 2px 8px rgba(0,0,0,.08);
-  padding:1.25rem;
-  margin-bottom:1.25rem
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
 }
 
-/* TOP ROW */
-.card-header{
-  display:grid;
-  grid-template-columns:1fr 1fr 1fr auto;
-  gap:1rem;
-  align-items:center
-}
-.field label{
-  font-size:.75rem;
-  color:#6b7280;
-  text-transform:uppercase;
-  letter-spacing:.05em
-}
-.field p{
-  font-weight:600;
-  margin-top:.2rem
+.container {
+  max-width: 1200px;
+  width: 100%;
 }
 
-/* BUTTONS */
-.btn-group{
-  display:flex;
-  gap:.5rem;
-  align-items:center
-}
-.toggle-btn{
-  background:#3b82f6;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  padding:.5rem .9rem;
-  cursor:pointer;
-  font-size:.9rem
-}
-.toggle-btn:hover{background:#2563eb}
-
-.edit-btn{
-  background:#f59e0b;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  padding:.5rem .9rem;
-  cursor:pointer;
-  font-size:.9rem
-}
-.edit-btn:hover{background:#d97706}
-
-.delete-btn{
-  background:#ef4444;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  padding:.5rem .9rem;
-  cursor:pointer;
-  font-size:.9rem
-}
-.delete-btn:hover{background:#dc2626}
-.delete-btn:disabled{
-  background:#9ca3af;
-  cursor:not-allowed
+.header {
+  text-align: center;
+  color: #fff;
+  margin-bottom: 50px;
 }
 
-/* DIVIDER */
-.divider{
-  height:1px;
-  background:#e5e7eb;
-  margin:1rem 0
+.header h1 {
+  font-size: 48px;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
 }
 
-/* TABLE */
-.table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:.5rem
-}
-.table th,.table td{
-  border:1px solid #e5e7eb;
-  padding:.5rem;
-  text-align:center;
-  font-size:.9rem
-}
-.table th{
-  background:#f9fafb;
-  font-weight:600
+.header p {
+  font-size: 18px;
+  opacity: 0.9;
 }
 
-.hidden{display:none}
-
-/* ✅ NEW: Error/Info Messages */
-.message{
-  background:#fee2e2;
-  border-left:4px solid #ef4444;
-  padding:1rem;
-  border-radius:6px;
-  margin-bottom:1rem
-}
-.message.info{
-  background:#dbeafe;
-  border-left-color:#3b82f6
-}
-.message h3{
-  font-size:1rem;
-  margin-bottom:.5rem
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+  margin-bottom: 40px;
 }
 
-/* ✅ NEW: Loading State */
-.loading{
-  text-align:center;
-  padding:2rem;
-  color:#6b7280
+.card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 40px 30px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  display: block;
 }
 
-/* RESPONSIVE */
-@media(max-width:768px){
-  .card-header{
-    grid-template-columns:1fr;
+.card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+}
+
+.card-icon {
+  font-size: 80px;
+  margin-bottom: 20px;
+  display: block;
+}
+
+.card h2 {
+  font-size: 24px;
+  margin-bottom: 15px;
+  color: #1f2937;
+}
+
+.card p {
+  font-size: 15px;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.card.primary {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #fff;
+}
+
+.card.primary h2,
+.card.primary p {
+  color: #fff;
+}
+
+.card.success {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+}
+
+.card.success h2,
+.card.success p {
+  color: #fff;
+}
+
+.card.warning {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
+}
+
+.card.warning h2,
+.card.warning p {
+  color: #fff;
+}
+
+.footer {
+  text-align: center;
+  color: #fff;
+  margin-top: 40px;
+}
+
+.footer p {
+  opacity: 0.8;
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .header h1 {
+    font-size: 36px;
   }
-  .btn-group{
-    width:100%;
+  
+  .header p {
+    font-size: 16px;
   }
-  .toggle-btn,.edit-btn,.delete-btn{
-    flex:1
+  
+  .cards-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
   }
+  
+  .card {
+    padding: 30px 20px;
+  }
+  
+  .card-icon {
+    font-size: 60px;
+  }
+}
+
+/* Quick Stats Section */
+.stats-section {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 30px;
+  margin-bottom: 40px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.stat-item {
+  text-align: center;
+  color: #fff;
+}
+
+.stat-value {
+  font-size: 36px;
+  font-weight: 800;
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  font-size: 14px;
+  opacity: 0.9;
 }
 </style>
 </head>
@@ -183,213 +188,106 @@ body{
 <body>
 
 <div class="container">
-
-  <!-- PAGE HEADER -->
-  <div class="page-header">
-    <h1>PHYSICAL STOCK TAKING</h1>
-    <button class="add-btn"
-      title="New Physical Stock Taking"
-      onclick="window.location.href='new-physicalstock.html'">+</button>
+  <div class="header">
+    <h1>📦 Inventory Management System</h1>
+    <p>Complete solution for inventory tracking and management</p>
   </div>
 
-  <!-- LIST -->
-  <div id="list">
-    <div class="loading">Loading...</div>
+  <div class="stats-section">
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-value">20</div>
+        <div class="stat-label">Total Items</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">₹7.85</div>
+        <div class="stat-label">Avg Price</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">100%</div>
+        <div class="stat-label">System Uptime</div>
+      </div>
+    </div>
   </div>
 
+  <div class="cards-grid">
+    <a href="read_barcode.html" class="card primary">
+      <span class="card-icon">📷</span>
+      <h2>Barcode Scanner</h2>
+      <p>Scan barcodes to quickly lookup item details, prices, and stock information in real-time</p>
+    </a>
+
+    <a href="dashboard.html" class="card success">
+      <span class="card-icon">📊</span>
+      <h2>Analytics Dashboard</h2>
+      <p>View comprehensive charts and graphs showing price analysis, inventory trends, and insights</p>
+    </a>
+
+    <a href="physical_stock.html" class="card warning">
+      <span class="card-icon">📋</span>
+      <h2>Physical Stock</h2>
+      <p>Manage and track physical inventory levels, perform stock counts, and update quantities</p>
+    </a>
+  </div>
+
+  <div class="footer">
+    <p>&copy; 2026 Inventory Management System. All rights reserved.</p>
+  </div>
 </div>
 
 <script>
-/* ================= CONFIG ================= */
-const API_URL =
-  'https://script.google.com/macros/s/AKfycbzGVv_vG6FRqaU4VerEjwew_Zi9deM2HE0kVxDE4dHEflg0J32uxx81lZVv1NMM3dYUbg/exec';
+// Add smooth animations on page load
+window.addEventListener('load', () => {
+  const cards = document.querySelectorAll('.card');
+  cards.forEach((card, index) => {
+    setTimeout(() => {
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(20px)';
+      card.style.transition = 'all 0.5s ease';
+      
+      setTimeout(() => {
+        card.style.opacity = '1';
+        card.style.transform = 'translateY(0)';
+      }, 50);
+    }, index * 100);
+  });
+});
 
-/* ================= HELPERS ================= */
-function parseStock(str) {
-  return str.replaceAll('),(', ')|(')
-    .replaceAll('(', '')
-    .replaceAll(')', '')
-    .split('|')
-    .map(s => {
-      const [code, unit, qty] = s.split(',');
-      return { code, unit, qty };
-    });
-}
+// Add ripple effect on click
+document.querySelectorAll('.card').forEach(card => {
+  card.addEventListener('click', function(e) {
+    const ripple = document.createElement('div');
+    ripple.style.position = 'absolute';
+    ripple.style.borderRadius = '50%';
+    ripple.style.background = 'rgba(255, 255, 255, 0.5)';
+    ripple.style.width = '100px';
+    ripple.style.height = '100px';
+    ripple.style.left = e.clientX - this.getBoundingClientRect().left - 50 + 'px';
+    ripple.style.top = e.clientY - this.getBoundingClientRect().top - 50 + 'px';
+    ripple.style.animation = 'ripple 0.6s ease-out';
+    ripple.style.pointerEvents = 'none';
+    
+    this.appendChild(ripple);
+    
+    setTimeout(() => ripple.remove(), 600);
+  });
+});
 
-function toggle(id) {
-  document.getElementById(id).classList.toggle('hidden');
-}
-
-/* ✅ NEW: Display Error Message */
-function showError(message, userEmail = '') {
-  const list = document.getElementById('list');
-  list.innerHTML = `
-    <div class="message">
-      <h3>⚠️ Access Denied</h3>
-      <p>${message}</p>
-      ${userEmail ? `<p style="margin-top:0.5rem"><strong>Your email:</strong> ${userEmail}</p>` : ''}
-      <p style="margin-top:0.5rem">Please contact the administrator to grant you access.</p>
-    </div>
-  `;
-}
-
-/* ✅ NEW: Display Info Message */
-function showInfo(message) {
-  const list = document.getElementById('list');
-  list.innerHTML = `
-    <div class="message info">
-      <h3>ℹ️ Information</h3>
-      <p>${message}</p>
-    </div>
-  `;
-}
-
-/* ================= DELETE ================= */
-async function deleteRecord(recordId, cardElement) {
-  if (!confirm('Are you sure you want to delete this record?')) return;
-
-  const btn = cardElement.querySelector('.delete-btn');
-  btn.disabled = true;
-  btn.textContent = 'Deleting...';
-
-  try {
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify({
-        action: 'delete',
-        recordId
-      })
-    });
-
-    const j = await res.json();
-
-    if (j.status === 'success') {
-      cardElement.style.opacity = '0';
-      setTimeout(() => cardElement.remove(), 300);
-    } else {
-      alert(j.message || 'Delete failed');
-      btn.disabled = false;
-      btn.textContent = 'Delete';
+// Add CSS animation for ripple
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes ripple {
+    0% {
+      transform: scale(0);
+      opacity: 1;
     }
-  } catch (err) {
-    alert(err.message);
-    btn.disabled = false;
-    btn.textContent = 'Delete';
+    100% {
+      transform: scale(4);
+      opacity: 0;
+    }
   }
-}
-
-/* ================= LOAD LIST ================= */
-async function loadList() {
-  try {
-    const res = await fetch(API_URL);
-    const data = await res.json();
-
-    // ✅ CHECK: Handle error responses from authentication
-    if (data.status === 'error') {
-      showError(data.message, data.userEmail);
-      return;
-    }
-
-    // ✅ CHECK: Handle successful response with data array
-    let records;
-    if (data.status === 'success' && Array.isArray(data.data)) {
-      records = data.data;
-    } else if (Array.isArray(data)) {
-      // Legacy format (array directly)
-      records = data;
-    } else {
-      showError('Unexpected data format received from server');
-      return;
-    }
-
-    const list = document.getElementById('list');
-
-    // ✅ CHECK: No records found
-    if (records.length === 0) {
-      showInfo('No stock taking records found. Click the + button to create one.');
-      return;
-    }
-
-    list.innerHTML = '';
-
-    records.forEach((r, i) => {
-      const items = parseStock(r.Text4);
-      const tableId = `items_${i}`;
-      const cardId = `card_${i}`;
-
-      list.innerHTML += `
-        <div class="card" id="${cardId}">
-          <div class="card-header">
-			
-			<div class="field">
-			<label>Document No</label>
-			<p>#${r.Id}</p>
-			</div>
-            <div class="field">
-              <label>Date</label>
-              <p>${r.Text1}</p>
-            </div>
-
-            <div class="field">
-              <label>Division</label>
-              <p>${r.Text2}</p>
-            </div>
-
-            <div class="field">
-              <label>Location</label>
-              <p>${r.Text3}</p>
-            </div>
-
-            <div class="btn-group">
-              <button class="toggle-btn"
-                onclick="toggle('${tableId}')">View</button>
-
-              <button class="edit-btn"
-                onclick="window.location.href='edit-physicalstock.html?recordId=${r.Id}'">
-                Edit
-              </button>
-
-              <button class="delete-btn"
-                onclick="deleteRecord(${r.Id}, document.getElementById('${cardId}'))">
-                Delete
-              </button>
-            </div>
-          </div>
-
-          <div id="${tableId}" class="hidden">
-            <div class="divider"></div>
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Item Code</th>
-                  <th>Unit</th>
-                  <th>Qty</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${items.map(it => `
-                  <tr>
-                    <td>${it.code}</td>
-                    <td>${it.unit}</td>
-                    <td>${it.qty}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-
-        </div>
-      `;
-    });
-
-  } catch (err) {
-    // ✅ CATCH: Network or other errors
-    showError(`Failed to load data: ${err.message}`);
-    console.error('Error loading list:', err);
-  }
-}
-
-document.addEventListener('DOMContentLoaded', loadList);
+`;
+document.head.appendChild(style);
 </script>
 
 </body>
