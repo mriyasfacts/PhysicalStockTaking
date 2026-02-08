@@ -4,704 +4,282 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Barcode Scanner - Item Lookup</title>
+
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+*{margin:0;padding:0;box-sizing:border-box}
 
-body {
+body{
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
+  background: linear-gradient(135deg,#667eea,#764ba2);
+  min-height:100vh;
+  padding:20px;
 }
 
-.container {
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  width: 100%;
-  max-width: 500px;
-  overflow: hidden;
+/* ===== LAYOUT ===== */
+.wrapper{
+  max-width:1000px;
+  margin:auto;
+  background:#fff;
+  border-radius:20px;
+  box-shadow:0 20px 60px rgba(0,0,0,.3);
+  overflow:hidden;
 }
 
-.header {
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-  color: white;
-  padding: 30px;
-  text-align: center;
+.header{
+  background:linear-gradient(135deg,#4f46e5,#7c3aed);
+  color:#fff;
+  padding:25px;
+  text-align:center;
 }
 
-.header h1 {
-  font-size: 28px;
-  font-weight: 700;
-  margin-bottom: 10px;
+.main{
+  display:flex;
+  gap:20px;
+  padding:25px;
 }
 
-.header p {
-  opacity: 0.9;
-  font-size: 16px;
+/* ===== LEFT : ITEM DETAILS ===== */
+.left{
+  flex:2;
 }
 
-.content {
-  padding: 30px;
+/* ===== RIGHT : SCANNER ===== */
+.right{
+  flex:1;
+  border-left:2px dashed #e5e7eb;
+  padding-left:20px;
 }
 
-.scanner-section {
-  margin-bottom: 30px;
+@media(max-width:768px){
+  .main{flex-direction:column}
+  .right{border-left:none;padding-left:0}
 }
 
-.scanner-input {
-  position: relative;
-  margin-bottom: 20px;
+/* ===== SCANNER ===== */
+.scanner-input{
+  position:relative;
+  margin-bottom:15px;
 }
 
-.scanner-input input {
-  width: 100%;
-  padding: 18px 20px;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  font-size: 18px;
-  font-weight: 500;
-  transition: all 0.3s ease;
+.scanner-input input{
+  width:100%;
+  padding:16px;
+  border:2px solid #e5e7eb;
+  border-radius:12px;
+  font-size:16px;
 }
 
-.scanner-input input:focus {
-  outline: none;
-  border-color: #4f46e5;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+.scanner-input label{
+  position:absolute;
+  left:15px;
+  top:50%;
+  transform:translateY(-50%);
+  color:#9ca3af;
+  pointer-events:none;
 }
 
-.scanner-input label {
-  position: absolute;
-  top: 50%;
-  left: 20px;
-  transform: translateY(-50%);
-  color: #9ca3af;
-  transition: all 0.3s ease;
-  pointer-events: none;
-  font-size: 18px;
+.scanner-input input:focus+label,
+.scanner-input input:not(:placeholder-shown)+label{
+  top:-8px;
+  font-size:12px;
+  background:#fff;
+  padding:0 5px;
+  color:#4f46e5;
 }
 
-.scanner-input input:focus + label,
-.scanner-input input:not(:placeholder-shown) + label {
-  top: -10px;
-  left: 15px;
-  font-size: 14px;
-  color: #4f46e5;
-  background: white;
-  padding: 0 5px;
+.scan-btn{
+  width:100%;
+  padding:15px;
+  border:none;
+  border-radius:12px;
+  background:linear-gradient(135deg,#10b981,#059669);
+  color:#fff;
+  font-size:16px;
+  font-weight:600;
+  cursor:pointer;
 }
 
-.scan-btn {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  padding: 18px 30px;
-  font-size: 18px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
+/* ===== STATES ===== */
+.hidden{display:none}
+
+.loading,
+.error-message,
+.not-found{
+  padding:20px;
+  border-radius:12px;
+  margin-bottom:15px;
+  text-align:center;
 }
 
-.scan-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+.loading{color:#6b7280}
+.error-message{background:#fee2e2;color:#dc2626}
+.not-found{background:#fef3c7;color:#92400e}
+
+/* ===== ITEM DETAILS ===== */
+.item-details{
+  background:#f8fafc;
+  border-radius:12px;
+  padding:20px;
+  border:2px solid #e5e7eb;
 }
 
-.scan-btn:active {
-  transform: translateY(0);
+.item-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:15px;
 }
 
-.scan-btn svg {
-  width: 24px;
-  height: 24px;
+.item-code{
+  background:#4f46e5;
+  color:#fff;
+  padding:6px 14px;
+  border-radius:20px;
+  font-size:13px;
 }
 
-.item-details {
-  background: #f8fafc;
-  border-radius: 12px;
-  padding: 25px;
-  border: 2px solid #e5e7eb;
-  animation: slideIn 0.5s ease;
+.detail-row{
+  display:flex;
+  margin-bottom:10px;
 }
 
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.detail-label{
+  width:120px;
+  color:#6b7280;
+  font-weight:600;
 }
 
-.item-details.hidden {
-  display: none;
-}
-
-.item-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #e5e7eb;
-}
-
-.item-header h2 {
-  color: #1f2937;
-  font-size: 22px;
-  font-weight: 700;
-}
-
-.item-code {
-  background: #4f46e5;
-  color: white;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.detail-row {
-  display: flex;
-  margin-bottom: 15px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.detail-label {
-  flex: 0 0 120px;
-  color: #6b7280;
-  font-weight: 600;
-  font-size: 16px;
-}
-
-.detail-value {
-  flex: 1;
-  color: #1f2937;
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.price {
-  font-size: 36px;
-  font-weight: 800;
-  color: #059669;
-  text-align: center;
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 2px dashed #e5e7eb;
-}
-
-.error-message {
-  background: #fee2e2;
-  color: #dc2626;
-  padding: 20px;
-  border-radius: 12px;
-  text-align: center;
-  font-weight: 600;
-  margin-bottom: 20px;
-  animation: slideIn 0.5s ease;
-}
-
-.loading {
-  text-align: center;
-  padding: 40px;
-  color: #6b7280;
-}
-
-.loading-spinner {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #4f46e5;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 15px;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.back-btn {
-  background: #6b7280;
-  color: white;
-  border: none;
-  border-radius: 12px;
-  padding: 15px 25px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  width: 100%;
-  margin-top: 20px;
-}
-
-.back-btn:hover {
-  background: #4b5563;
-}
-
-.not-found {
-  background: #fef3c7;
-  color: #92400e;
-  padding: 20px;
-  border-radius: 12px;
-  text-align: center;
-  margin-bottom: 20px;
-  animation: slideIn 0.5s ease;
-}
-
-.not-found h3 {
-  margin-bottom: 10px;
-  font-size: 18px;
-}
-
-.barcode-list {
-  background: #e0e7ff;
-  padding: 10px 15px;
-  border-radius: 8px;
-  margin-top: 10px;
-  font-family: monospace;
-  font-size: 14px;
-  word-break: break-all;
-}
-
-@media (max-width: 600px) {
-  .container {
-    border-radius: 15px;
-  }
-  
-  .header {
-    padding: 20px;
-  }
-  
-  .content {
-    padding: 20px;
-  }
-  
-  .scanner-input input {
-    font-size: 16px;
-    padding: 15px;
-  }
-  
-  .scan-btn {
-    padding: 15px;
-    font-size: 16px;
-  }
-  
-  .item-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-  
-  .detail-row {
-    flex-direction: column;
-    gap: 5px;
-  }
-  
-  .price {
-    font-size: 28px;
-  }
+.price{
+  font-size:30px;
+  font-weight:800;
+  color:#059669;
 }
 </style>
 </head>
+
 <body>
 
-<div class="container">
+<div class="wrapper">
   <div class="header">
-    <h1>📦 Barcode Scanner</h1>
-    <p>Scan or enter barcode to get item details</p>
+    <h1>📦 Item Lookup</h1>
+    <p>Scan barcode to get item details</p>
   </div>
 
-  <div class="content">
-    <div class="scanner-section">
-      <div class="scanner-input">
-        <input type="text" 
-               id="barcodeInput" 
-               placeholder=" "
-               onkeypress="handleEnterKey(event)"
-               autocomplete="off">
-        <label for="barcodeInput">Enter Barcode</label>
-      </div>
-      
-      <button class="scan-btn" onclick="lookupItem()">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-        Search Item
-      </button>
-    </div>
+  <div class="main">
 
-    <div id="loading" class="loading hidden">
-      <div class="loading-spinner"></div>
-      <p>Searching for item...</p>
-    </div>
+    <!-- LEFT -->
+    <div class="left">
 
-    <div id="error" class="error-message hidden"></div>
-    
-    <div id="notFound" class="not-found hidden">
-      <h3>⚠️ Item Not Found</h3>
-      <p>The barcode you entered was not found in the system.</p>
-      <p>Try entering the barcode without commas or spaces.</p>
-    </div>
+      <div id="loading" class="loading hidden">Searching item...</div>
+      <div id="error" class="error-message hidden"></div>
 
-    <div id="itemDetails" class="item-details hidden">
-      <div class="item-header">
-        <h2 id="itemDescription">-</h2>
-        <div class="item-code" id="itemCode">-</div>
+      <div id="notFound" class="not-found hidden">
+        ⚠️ Item Not Found
       </div>
-      
-      <div class="detail-row">
-        <div class="detail-label">Item Code:</div>
-        <div class="detail-value" id="itemCodeFull">-</div>
-      </div>
-      
-      <div class="detail-row">
-        <div class="detail-label">Description:</div>
-        <div class="detail-value" id="itemDescFull">-</div>
-      </div>
-      
-      <div class="detail-row">
-        <div class="detail-label">Unit:</div>
-        <div class="detail-value" id="itemUnit">-</div>
-      </div>
-      
-      <div class="detail-row">
-        <div class="detail-label">Price:</div>
-        <div class="detail-value">
+
+      <div id="itemDetails" class="item-details hidden">
+        <div class="item-header">
+          <h2 id="itemDescription">-</h2>
+          <div class="item-code" id="itemCode">-</div>
+        </div>
+
+        <div class="detail-row">
+          <div class="detail-label">Item Code</div>
+          <div id="itemCodeFull">-</div>
+        </div>
+
+        <div class="detail-row">
+          <div class="detail-label">Unit</div>
+          <div id="itemUnit">-</div>
+        </div>
+
+        <div class="detail-row">
+          <div class="detail-label">Price</div>
           <div class="price" id="itemPrice">-</div>
         </div>
-      </div>
-      
-      <div class="detail-row">
-        <div class="detail-label">Barcode:</div>
-        <div class="detail-value" id="itemBarcode">-</div>
-      </div>
-      
-      <div class="detail-row">
-        <div class="detail-label">All Barcodes:</div>
-        <div class="detail-value">
-          <div class="barcode-list" id="allBarcodes">-</div>
+
+        <div class="detail-row">
+          <div class="detail-label">Barcode</div>
+          <div id="itemBarcode">-</div>
         </div>
       </div>
     </div>
 
-    <button class="back-btn" onclick="goBack()">
-      ← Back to Stock Taking
-    </button>
+    <!-- RIGHT -->
+    <div class="right">
+      <h3 style="margin-bottom:10px">📷 Barcode Scanner</h3>
+
+      <div class="scanner-input">
+        <input id="barcodeInput" placeholder=" " autocomplete="off">
+        <label>Enter Barcode</label>
+      </div>
+
+      <button class="scan-btn" onclick="lookupItem()">Search</button>
+    </div>
+
   </div>
 </div>
 
 <script>
-// Configuration - Use YOUR Google Apps Script URL
 const API_URL = 'https://script.google.com/macros/s/AKfycbybKCpHN6MH-Sg9waB7_hCIJeNbzc57w03DvB-284pObtugelX5moWu1sXidOS3bZZUVA/exec';
 
-// DOM Elements
 const barcodeInput = document.getElementById('barcodeInput');
 const loading = document.getElementById('loading');
 const errorDiv = document.getElementById('error');
 const notFoundDiv = document.getElementById('notFound');
 const itemDetails = document.getElementById('itemDetails');
 
-// Item detail elements
 const itemDescription = document.getElementById('itemDescription');
 const itemCode = document.getElementById('itemCode');
 const itemCodeFull = document.getElementById('itemCodeFull');
-const itemDescFull = document.getElementById('itemDescFull');
 const itemUnit = document.getElementById('itemUnit');
-const itemBarcode = document.getElementById('itemBarcode');
-const allBarcodes = document.getElementById('allBarcodes');
 const itemPrice = document.getElementById('itemPrice');
+const itemBarcode = document.getElementById('itemBarcode');
 
-// Format number with commas (for barcode display)
-function formatBarcode(barcodeStr) {
-  if (!barcodeStr) return 'N/A';
-  
-  // Remove all non-digits first
-  const digits = barcodeStr.toString().replace(/\D/g, '');
-  
-  // Format with commas every 3 digits from right
-  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
-
-// Format price with currency
-function formatPrice(price) {
-  if (!price || price === '' || price === 'N/A') return 'Not Available';
-  
-  // Try to parse as number
-  const num = parseFloat(price);
-  if (isNaN(num)) return `₹ ${price}`; // If it's not a number, show as is
-  
-  return `₹ ${num.toFixed(2)}`;
-}
-
-// Clear all displays
-function clearAllDisplays() {
+function clearAll(){
+  loading.classList.add('hidden');
   errorDiv.classList.add('hidden');
   notFoundDiv.classList.add('hidden');
   itemDetails.classList.add('hidden');
-  loading.classList.add('hidden');
 }
 
-// Clear item details
-function clearItemDetails() {
-  itemDescription.textContent = '-';
-  itemCode.textContent = '-';
-  itemCodeFull.textContent = '-';
-  itemDescFull.textContent = '-';
-  itemUnit.textContent = '-';
-  itemBarcode.textContent = '-';
-  allBarcodes.textContent = '-';
-  itemPrice.textContent = '-';
-}
+async function lookupItem(){
+  const barcode = barcodeInput.value.replace(/\D/g,'');
+  if(!barcode){ return; }
 
-// Show error message
-function showError(message) {
-  clearAllDisplays();
-  errorDiv.textContent = message;
-  errorDiv.classList.remove('hidden');
-}
-
-// Show not found message
-function showNotFound() {
-  clearAllDisplays();
-  notFoundDiv.classList.remove('hidden');
-}
-
-// Show item details
-function showItemDetails(item) {
-  clearAllDisplays();
-  
-  // Display the item details
-  itemCode.textContent = item.code || 'N/A';
-  itemCodeFull.textContent = item.code || 'N/A';
-  itemDescription.textContent = item.description || 'N/A';
-  itemDescFull.textContent = item.description || 'N/A';
-  itemUnit.textContent = item.unit || 'N/A';
-  itemBarcode.textContent = formatBarcode(item.barcode) || 'N/A';
-  itemPrice.textContent = formatPrice(item.price || item[4] || '');
-  
-  // Display all barcodes (formatted nicely)
-  if (item.allBarcodes && Array.isArray(item.allBarcodes)) {
-    const formattedBarcodes = item.allBarcodes
-      .map(b => formatBarcode(b))
-      .filter(b => b !== 'N/A')
-      .join(', ');
-    allBarcodes.textContent = formattedBarcodes || 'N/A';
-  } else {
-    allBarcodes.textContent = formatBarcode(item.barcode) || 'N/A';
-  }
-  
-  // Show the details section
-  itemDetails.classList.remove('hidden');
-}
-
-// Show loading state
-function showLoading() {
-  clearAllDisplays();
+  clearAll();
   loading.classList.remove('hidden');
-}
 
-// Handle Enter key press
-function handleEnterKey(event) {
-  if (event.key === 'Enter') {
-    lookupItem();
-  }
-}
+  try{
+    const res = await fetch(`${API_URL}?action=get_item_by_barcode&barcode=${barcode}`);
+    const data = await res.json();
 
-// Clean barcode input (remove all non-digits for searching)
-function cleanBarcodeForSearch(barcode) {
-  return barcode.toString().replace(/\D/g, '').trim();
-}
+    clearAll();
 
-// Main function to lookup item by barcode
-async function lookupItem() {
-  const rawBarcode = barcodeInput.value.trim();
-  
-  if (!rawBarcode) {
-    showError('Please enter a barcode');
-    barcodeInput.focus();
-    return;
-  }
+    if(data.status === 'success'){
+      const i = data.data;
+      itemDescription.textContent = i.description;
+      itemCode.textContent = i.code;
+      itemCodeFull.textContent = i.code;
+      itemUnit.textContent = i.unit;
+      itemPrice.textContent = `₹ ${i.price || 'N/A'}`;
+      itemBarcode.textContent = barcode;
 
-  const searchBarcode = cleanBarcodeForSearch(rawBarcode);
-  
-  if (searchBarcode.length === 0) {
-    showError('Please enter a valid barcode (numbers only)');
-    barcodeInput.focus();
-    return;
-  }
-
-  showLoading();
-  clearItemDetails();
-
-  try {
-    // Call the barcode lookup endpoint
-    const url = `${API_URL}?action=get_item_by_barcode&barcode=${encodeURIComponent(searchBarcode)}`;
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    if (data.status === 'error') {
-      showNotFound();
-      return;
-    }
-
-    if (data.status === 'success' && data.data) {
-      showItemDetails(data.data);
-      
-      // Clear input for next scan
+      itemDetails.classList.remove('hidden');
       barcodeInput.value = '';
-      barcodeInput.focus();
-      
-      // Play success sound
-      playSuccessSound();
-    } else {
-      showNotFound();
+    }else{
+      notFoundDiv.classList.remove('hidden');
     }
 
-  } catch (error) {
-    showError(`Error: ${error.message}`);
-    console.error('Lookup error:', error);
+  }catch(e){
+    clearAll();
+    errorDiv.textContent = e.message;
+    errorDiv.classList.remove('hidden');
   }
 }
 
-// Optional: Play sound on successful scan
-function playSuccessSound() {
-  try {
-    // Create a simple beep sound
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    oscillator.frequency.value = 1000;
-    oscillator.type = 'sine';
-    
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-    
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.2);
-  } catch (e) {
-    // Audio not supported, silently fail
-  }
-}
-
-// Go back to previous page or home
-function goBack() {
-  if (document.referrer) {
-    window.history.back();
-  } else {
-    window.location.href = 'index.html'; // Change to your main page
-  }
-}
-
-// Auto-focus on input when page loads
-window.addEventListener('DOMContentLoaded', () => {
-  barcodeInput.focus();
-  
-  // Optional: Auto-test with a sample barcode
-  // Uncomment for testing:
-  // barcodeInput.value = '123465476498691';
-  // setTimeout(() => lookupItem(), 500);
-});
-
-// Keyboard shortcuts
-document.addEventListener('keydown', (event) => {
-  // Ctrl/Cmd + F to focus on barcode input
-  if ((event.ctrlKey || event.metaKey) && event.key === 'f') {
-    event.preventDefault();
-    barcodeInput.focus();
-    barcodeInput.select();
-  }
-  
-  // Escape to clear input and hide details
-  if (event.key === 'Escape') {
-    barcodeInput.value = '';
-    barcodeInput.focus();
-    clearAllDisplays();
-  }
-  
-  // F5 to refresh and clear
-  if (event.key === 'F5') {
-    event.preventDefault();
-    barcodeInput.value = '';
-    barcodeInput.focus();
-    clearAllDisplays();
-  }
-});
-
-// Auto-submit for barcode scanners (detects when barcode is complete)
-let barcodeBuffer = '';
-let lastKeyTime = 0;
-const BARCODE_TIMEOUT = 100; // ms
-
-barcodeInput.addEventListener('keydown', (event) => {
-  const currentTime = new Date().getTime();
-  
-  // Reset buffer if too much time has passed
-  if (currentTime - lastKeyTime > BARCODE_TIMEOUT) {
-    barcodeBuffer = '';
-  }
-  
-  // Add key to buffer (ignore Enter key)
-  if (event.key !== 'Enter') {
-    barcodeBuffer += event.key;
-  }
-  
-  lastKeyTime = currentTime;
-  
-  // Auto-submit for common barcode lengths (8, 12, 13, 14 digits)
-  const commonLengths = [8, 12, 13, 14];
-  if (commonLengths.includes(barcodeBuffer.length)) {
-    // Wait a moment to ensure typing is complete
-    clearTimeout(window.barcodeTimer);
-    window.barcodeTimer = setTimeout(() => {
-      if (cleanBarcodeForSearch(barcodeInput.value).length === barcodeBuffer.length) {
-        lookupItem();
-        barcodeBuffer = ''; // Reset buffer after submission
-      }
-    }, 50);
-  }
-});
-
-// Paste handling (for barcode scanners that paste)
-barcodeInput.addEventListener('paste', (event) => {
-  // Get pasted text
-  const pastedText = (event.clipboardData || window.clipboardData).getData('text');
-  
-  // Clean and set the value
-  setTimeout(() => {
-    const cleaned = cleanBarcodeForSearch(pastedText);
-    if (cleaned.length > 0) {
-      barcodeInput.value = cleaned;
-      lookupItem();
-    }
-  }, 10);
+barcodeInput.addEventListener('keydown',e=>{
+  if(e.key==='Enter') lookupItem();
 });
 </script>
 
