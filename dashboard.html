@@ -151,6 +151,14 @@ canvas {
   background: linear-gradient(135deg, #8b5cf6, #7c3aed);
 }
 
+.stat-card:nth-child(5) {
+  background: linear-gradient(135deg, #ec4899, #db2777);
+}
+
+.stat-card:nth-child(6) {
+  background: linear-gradient(135deg, #14b8a6, #0d9488);
+}
+
 /* Table */
 .table-wrapper {
   overflow-x: auto;
@@ -179,6 +187,103 @@ tr:hover {
   background: #f9fafb;
 }
 
+/* Loading States */
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+}
+
+.loading-spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #4f46e5;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-message {
+  background: #fee;
+  color: #c00;
+  padding: 20px;
+  border-radius: 8px;
+  margin: 20px 0;
+  border-left: 4px solid #c00;
+}
+
+/* Search and Filter */
+.search-filter {
+  background: #f8fafc;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  border: 2px solid #e5e7eb;
+}
+
+.search-box {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.search-box input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.search-box button {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.filter-controls {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.filter-controls select {
+  padding: 10px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+  min-width: 200px;
+}
+
+/* Export Button */
+.export-btn {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.export-btn:hover {
+  opacity: 0.9;
+}
+
 @media (max-width: 768px) {
   .nav-tabs {
     padding: 15px;
@@ -192,10 +297,27 @@ tr:hover {
   .content {
     padding: 20px;
   }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .search-box {
+    flex-direction: column;
+  }
+  
+  .filter-controls {
+    flex-direction: column;
+  }
+  
+  .filter-controls select {
+    width: 100%;
+  }
 }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 
 <body>
@@ -210,11 +332,27 @@ tr:hover {
     <button class="tab-btn active" onclick="showTab('overview')">📈 Overview</button>
     <button class="tab-btn" onclick="showTab('price')">💰 Price Analysis</button>
     <button class="tab-btn" onclick="showTab('data')">📋 Data Table</button>
+    <button class="tab-btn" onclick="refreshData()">🔄 Refresh Data</button>
   </div>
 
   <div class="content">
+    <!-- Loading State -->
+    <div id="loading" class="loading">
+      <div class="loading-spinner"></div>
+      <p>Loading inventory data from API...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="error" class="error-message" style="display: none;">
+      <h3>Error Loading Data</h3>
+      <p id="error-message"></p>
+      <button onclick="refreshData()" style="margin-top: 10px; padding: 8px 16px; background: #4f46e5; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        Retry
+      </button>
+    </div>
+
     <!-- Overview Tab -->
-    <div id="overview" class="graph-container active">
+    <div id="overview" class="graph-container" style="display: none;">
       <div class="stats-grid">
         <div class="stat-card">
           <h3>Total Items</h3>
@@ -222,15 +360,23 @@ tr:hover {
         </div>
         <div class="stat-card">
           <h3>Average Price</h3>
-          <div class="value" id="avgPrice">₹0</div>
+          <div class="value" id="avgPrice">₹0.00</div>
         </div>
         <div class="stat-card">
           <h3>Highest Price</h3>
-          <div class="value" id="maxPrice">₹0</div>
+          <div class="value" id="maxPrice">₹0.00</div>
         </div>
         <div class="stat-card">
           <h3>Lowest Price</h3>
-          <div class="value" id="minPrice">₹0</div>
+          <div class="value" id="minPrice">₹0.00</div>
+        </div>
+        <div class="stat-card">
+          <h3>Total Value</h3>
+          <div class="value" id="totalValue">₹0.00</div>
+        </div>
+        <div class="stat-card">
+          <h3>Items with Price</h3>
+          <div class="value" id="itemsWithPrice">0</div>
         </div>
       </div>
 
@@ -238,10 +384,15 @@ tr:hover {
         <div class="chart-title">Item Distribution by Type</div>
         <canvas id="overviewChart"></canvas>
       </div>
+
+      <div class="chart-wrapper">
+        <div class="chart-title">Price Distribution by Category</div>
+        <canvas id="categoryPriceChart"></canvas>
+      </div>
     </div>
 
     <!-- Price Analysis Tab -->
-    <div id="price" class="graph-container">
+    <div id="price" class="graph-container" style="display: none;">
       <div class="chart-wrapper">
         <div class="chart-title">Price Range Distribution</div>
         <canvas id="priceChart"></canvas>
@@ -251,12 +402,55 @@ tr:hover {
         <div class="chart-title">Top 10 Most Expensive Items</div>
         <canvas id="topPriceChart"></canvas>
       </div>
+
+      <div class="chart-wrapper">
+        <div class="chart-title">Bottom 10 Least Expensive Items</div>
+        <canvas id="bottomPriceChart"></canvas>
+      </div>
     </div>
 
     <!-- Data Table Tab -->
-    <div id="data" class="graph-container">
+    <div id="data" class="graph-container" style="display: none;">
+      <div class="search-filter">
+        <div class="search-box">
+          <input type="text" id="searchInput" placeholder="Search by Code, Description, Barcode...">
+          <button onclick="filterTable()">🔍 Search</button>
+          <button onclick="clearFilters()">🗑️ Clear</button>
+          <button class="export-btn" onclick="exportToExcel()">
+            📊 Export to Excel
+          </button>
+        </div>
+        
+        <div class="filter-controls">
+          <select id="priceFilter" onchange="filterTable()">
+            <option value="">Filter by Price Range</option>
+            <option value="0-5">₹0 - ₹5</option>
+            <option value="6-10">₹6 - ₹10</option>
+            <option value="11-20">₹11 - ₹20</option>
+            <option value="21-50">₹21 - ₹50</option>
+            <option value="51-100">₹51 - ₹100</option>
+            <option value="100+">Above ₹100</option>
+          </select>
+          
+          <select id="unitFilter" onchange="filterTable()">
+            <option value="">Filter by Unit</option>
+          </select>
+          
+          <select id="sortBy" onchange="filterTable()">
+            <option value="">Sort By</option>
+            <option value="price-desc">Price: High to Low</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="code">Code</option>
+            <option value="description">Description</option>
+          </select>
+        </div>
+      </div>
+
       <div class="chart-wrapper">
-        <div class="chart-title">Complete Inventory Data</div>
+        <div class="chart-title">
+          Complete Inventory Data 
+          <span id="tableCount" style="font-size: 14px; color: #666; margin-left: 10px;">(0 items)</span>
+        </div>
         <div class="table-wrapper">
           <table id="dataTable">
             <thead>
@@ -266,6 +460,7 @@ tr:hover {
                 <th>Unit</th>
                 <th>Barcode</th>
                 <th>Price (₹)</th>
+                <th>Price Range</th>
               </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -277,76 +472,162 @@ tr:hover {
 </div>
 
 <script>
-// Inventory Data
-const inventoryData = [
-  {code: "10200364710", description: "0A 4P 100MA RCCB-BC410010-L&T", unit: "NOS", barcode: "1234654-76498695", price: 5},
-  {code: "10200364840", description: "A 4P 100MA RCCB-BC404010-L&T", unit: "NOS", barcode: "462344-87967888", price: 10},
-  {code: "10200380", description: "6DIGITAL VOLTMETER 1PH 96*96-MV-305-SELEC", unit: "NOS", barcode: "1283947-76498214", price: 0},
-  {code: "10200380", description: "7TIMER STAR DELTA-800SD-2-230-SELEC", unit: "NOS", barcode: "2394856-98127463", price: 3},
-  {code: "10200380", description: "8UNDER VOLTAGE RELAY 3PH-642VTR-3-SELEC", unit: "NOS", barcode: "3478291-56473827", price: 5},
-  {code: "10200385", description: "7160A 3P 25KA MCCB-3VT8-3VT82161AA030AA2-SIEMENS", unit: "NOS", barcode: "4581923-83927461", price: 23},
-  {code: "10200404", description: "750x10 TINNED COPPER BUSBAR-LUVATA", unit: "MTR", barcode: "5692837-47291833", price: 5},
-  {code: "10200405", description: "510A 1P 10KA MCB-MERLIN GERIN", unit: "NOS", barcode: "6719284-39584728", price: 7},
-  {code: "10200405", description: "750x5 TINNED COPPER BUSBAR-LUVATA", unit: "NOS", barcode: "7823946-91827342", price: 3},
-  {code: "10200405", description: "8LABEL-WARNING 415V", unit: "NOS", barcode: "8945721-63748299", price: 8},
-  {code: "10200414", description: "4PANEL WIRE 25MM BLACK-HAVELLS", unit: "NOS", barcode: "9153847-27483916", price: 6},
-  {code: "10200414", description: "9PANEL WIRE 4MM BLUE-HAVELLS", unit: "NOS", barcode: "1267394-83917269", price: 8},
-  {code: "10200415", description: "0PANEL WIRE 4MM BLACK-HAVELLS", unit: "NOS", barcode: "2378491-56492837", price: 6},
-  {code: "10200415", description: "1PANEL WIRE 4MM RED-HAVELLS", unit: "NOS", barcode: "3481927-91736484", price: 5},
-  {code: "10200424", description: "8160A 3P PANEL MOUNTING ISOLATOR OT160EV03P-ABB", unit: "NOS", barcode: "4592831-72649586", price: 2},
-  {code: "10200425", description: "1125A 4P MODULAR ISOLATOR-E204/125r-ABB", unit: "NOS", barcode: "5617392-94837269", price: 4},
-  {code: "10200425", description: "4CBCT 120-BZCT120-BROYCE", unit: "NOS", barcode: "6738294-18273642", price: 9},
-  {code: "10200425", description: "5DRAWING POCKET A4 SIZE", unit: "NOS", barcode: "7849162-39572849", price: 9},
-  {code: "10200440", description: "1SHUNT RELEASE FOR 3WT ACB-3WT98511JK00-SIEMENS", unit: "NOS", barcode: "8952741-62738497", price: 1},
-  {code: "10200440", description: "3ROTARY HANDLE FOR MCCB-3VL8-3VL98003HF05-SIEMENS", unit: "NOS", barcode: "9163827-74829167", price: 2}
-];
-
+// API Configuration
+const API_URL = 'https://script.google.com/macros/s/AKfycby0FK4JyfFO0awFijuXswRjgfCQw55WBLwYRrOgB4BeeNOkglazid7R-zToZjJWEJs_qg/exec';
+let inventoryData = [];
+let filteredData = [];
 let charts = {};
 
-// Initialize
-function init() {
+// Show/Hide UI elements
+function showLoading(show) {
+  document.getElementById('loading').style.display = show ? 'block' : 'none';
+}
+
+function showError(message) {
+  document.getElementById('error').style.display = 'block';
+  document.getElementById('error-message').textContent = message;
+  
+  // Hide other content
+  document.getElementById('overview').style.display = 'none';
+  document.getElementById('price').style.display = 'none';
+  document.getElementById('data').style.display = 'none';
+}
+
+function hideError() {
+  document.getElementById('error').style.display = 'none';
+}
+
+// Fetch data from API
+async function fetchInventoryData() {
+  try {
+    showLoading(true);
+    hideError();
+    
+    console.log('Fetching data from API...');
+    
+    // Use the inventory analytics endpoint
+    const response = await fetch(`${API_URL}?action=get_inventory_analytics`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.status === 'success') {
+      // Use the data directly
+      inventoryData = data.data || [];
+      filteredData = [...inventoryData];
+      
+      console.log('Fetched inventory data:', inventoryData);
+      
+      if (inventoryData.length === 0) {
+        showError('No inventory data found in the system.');
+        return;
+      }
+      
+      // Initialize dashboard with fetched data
+      initDashboard();
+      
+      // Show the overview tab by default
+      showTab('overview');
+      
+    } else {
+      throw new Error(data.message || 'Failed to fetch data from API');
+    }
+    
+  } catch (error) {
+    console.error('Error fetching analytics data:', error);
+    showError(`Failed to load data: ${error.message}. Please check your API endpoint.`);
+  } finally {
+    showLoading(false);
+  }
+}
+
+// Initialize Dashboard
+function initDashboard() {
+  console.log('Initializing dashboard with', inventoryData.length, 'items');
+  
   calculateStats();
   createOverviewChart();
+  createCategoryPriceChart();
   createPriceCharts();
   populateDataTable();
+  populateUnitFilter();
 }
 
 // Calculate Statistics
 function calculateStats() {
-  const prices = inventoryData.map(item => item.price);
+  // Filter out items with valid prices
+  const itemsWithValidPrice = inventoryData.filter(item => {
+    const price = parseFloat(item.price);
+    return !isNaN(price) && price > 0;
+  });
+  
   const total = inventoryData.length;
-  const avg = prices.reduce((a, b) => a + b, 0) / total;
-  const max = Math.max(...prices);
-  const min = Math.min(...prices);
+  const withPriceCount = itemsWithValidPrice.length;
+  
+  let avg = 0;
+  let max = 0;
+  let min = 0;
+  let totalValue = 0;
+  
+  if (withPriceCount > 0) {
+    const prices = itemsWithValidPrice.map(item => parseFloat(item.price));
+    const sum = prices.reduce((a, b) => a + b, 0);
+    avg = sum / withPriceCount;
+    max = Math.max(...prices);
+    min = Math.min(...prices);
+    totalValue = sum;
+  }
+  
+  console.log('Stats calculated:', { 
+    total, 
+    avg, 
+    max, 
+    min, 
+    totalValue,
+    withPriceCount 
+  });
 
-  document.getElementById('totalItems').textContent = total;
+  document.getElementById('totalItems').textContent = total.toLocaleString();
   document.getElementById('avgPrice').textContent = '₹' + avg.toFixed(2);
-  document.getElementById('maxPrice').textContent = '₹' + max;
-  document.getElementById('minPrice').textContent = '₹' + min;
+  document.getElementById('maxPrice').textContent = '₹' + max.toFixed(2);
+  document.getElementById('minPrice').textContent = '₹' + min.toFixed(2);
+  document.getElementById('totalValue').textContent = '₹' + totalValue.toFixed(2);
+  document.getElementById('itemsWithPrice').textContent = withPriceCount.toLocaleString();
 }
 
-// Overview Chart
+// Overview Chart - Item Distribution by Type
 function createOverviewChart() {
   const ctx = document.getElementById('overviewChart');
+  
+  // Destroy existing chart if it exists
+  if (charts.overview) {
+    charts.overview.destroy();
+  }
   
   // Group by unit type
   const unitCounts = {};
   inventoryData.forEach(item => {
-    unitCounts[item.unit] = (unitCounts[item.unit] || 0) + 1;
+    const unit = item.unit || 'Unknown';
+    unitCounts[unit] = (unitCounts[unit] || 0) + 1;
   });
 
+  // Sort by count (descending)
+  const sortedUnits = Object.entries(unitCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10); // Top 10 units
+
   charts.overview = new Chart(ctx, {
-    type: 'doughnut',
+    type: 'pie',
     data: {
-      labels: Object.keys(unitCounts),
+      labels: sortedUnits.map(([unit]) => unit),
       datasets: [{
-        data: Object.values(unitCounts),
+        data: sortedUnits.map(([, count]) => count),
         backgroundColor: [
-          '#4f46e5',
-          '#10b981',
-          '#f59e0b',
-          '#ef4444',
-          '#8b5cf6'
+          '#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+          '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#06b6d4'
         ]
       }]
     },
@@ -354,7 +635,96 @@ function createOverviewChart() {
       responsive: true,
       plugins: {
         legend: {
-          position: 'bottom'
+          position: 'right',
+          labels: {
+            padding: 20
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.label || '';
+              const value = context.raw || 0;
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = Math.round((value / total) * 100);
+              return `${label}: ${value} (${percentage}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// Category Price Chart
+function createCategoryPriceChart() {
+  const ctx = document.getElementById('categoryPriceChart');
+  
+  if (charts.categoryPrice) {
+    charts.categoryPrice.destroy();
+  }
+  
+  // Group by unit and calculate average price
+  const unitPrices = {};
+  const unitCounts = {};
+  
+  inventoryData.forEach(item => {
+    const unit = item.unit || 'Unknown';
+    const price = parseFloat(item.price);
+    
+    if (!isNaN(price) && price > 0) {
+      if (!unitPrices[unit]) {
+        unitPrices[unit] = 0;
+        unitCounts[unit] = 0;
+      }
+      unitPrices[unit] += price;
+      unitCounts[unit]++;
+    }
+  });
+  
+  // Calculate averages
+  const unitAverages = {};
+  Object.keys(unitPrices).forEach(unit => {
+    unitAverages[unit] = unitPrices[unit] / unitCounts[unit];
+  });
+  
+  // Sort by average price (descending) and take top 10
+  const sortedAverages = Object.entries(unitAverages)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10);
+  
+  charts.categoryPrice = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: sortedAverages.map(([unit]) => unit),
+      datasets: [{
+        label: 'Average Price (₹)',
+        data: sortedAverages.map(([, avg]) => avg),
+        backgroundColor: '#8b5cf6',
+        borderColor: '#7c3aed',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Average Price (₹)'
+          }
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'Unit Type'
+          }
         }
       }
     }
@@ -363,22 +733,35 @@ function createOverviewChart() {
 
 // Price Charts
 function createPriceCharts() {
+  // Destroy existing charts if they exist
+  if (charts.priceRange) charts.priceRange.destroy();
+  if (charts.topPrice) charts.topPrice.destroy();
+  if (charts.bottomPrice) charts.bottomPrice.destroy();
+  
+  // Filter items with valid prices
+  const itemsWithPrice = inventoryData.filter(item => {
+    const price = parseFloat(item.price);
+    return !isNaN(price) && price > 0;
+  });
+  
   // Price Range Distribution
   const priceRanges = {
     '0-5': 0,
     '6-10': 0,
-    '11-15': 0,
-    '16-20': 0,
-    '21+': 0
+    '11-20': 0,
+    '21-50': 0,
+    '51-100': 0,
+    '100+': 0
   };
 
-  inventoryData.forEach(item => {
-    const price = item.price;
+  itemsWithPrice.forEach(item => {
+    const price = parseFloat(item.price);
     if (price <= 5) priceRanges['0-5']++;
     else if (price <= 10) priceRanges['6-10']++;
-    else if (price <= 15) priceRanges['11-15']++;
-    else if (price <= 20) priceRanges['16-20']++;
-    else priceRanges['21+']++;
+    else if (price <= 20) priceRanges['11-20']++;
+    else if (price <= 50) priceRanges['21-50']++;
+    else if (price <= 100) priceRanges['51-100']++;
+    else priceRanges['100+']++;
   });
 
   charts.priceRange = new Chart(document.getElementById('priceChart'), {
@@ -400,22 +783,78 @@ function createPriceCharts() {
       },
       scales: {
         y: {
-          beginAtZero: true
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Number of Items'
+          },
+          ticks: {
+            stepSize: 1
+          }
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'Price Range (₹)'
+          }
         }
       }
     }
   });
 
   // Top 10 Most Expensive
-  const sorted = [...inventoryData].sort((a, b) => b.price - a.price).slice(0, 10);
+  const topExpensive = [...itemsWithPrice]
+    .sort((a, b) => parseFloat(b.price) - parseFloat(a.price))
+    .slice(0, 10);
   
   charts.topPrice = new Chart(document.getElementById('topPriceChart'), {
-    type: 'horizontalBar',
+    type: 'bar',
     data: {
-      labels: sorted.map(item => item.description.substring(0, 30) + '...'),
+      labels: topExpensive.map(item => {
+        const desc = item.description || item.code || 'No Description';
+        return desc.length > 25 ? desc.substring(0, 25) + '...' : desc;
+      }),
       datasets: [{
         label: 'Price (₹)',
-        data: sorted.map(item => item.price),
+        data: topExpensive.map(item => parseFloat(item.price)),
+        backgroundColor: '#ef4444'
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Price (₹)'
+          }
+        }
+      }
+    }
+  });
+
+  // Bottom 10 Least Expensive
+  const bottomExpensive = [...itemsWithPrice]
+    .sort((a, b) => parseFloat(a.price) - parseFloat(b.price))
+    .slice(0, 10);
+  
+  charts.bottomPrice = new Chart(document.getElementById('bottomPriceChart'), {
+    type: 'bar',
+    data: {
+      labels: bottomExpensive.map(item => {
+        const desc = item.description || item.code || 'No Description';
+        return desc.length > 25 ? desc.substring(0, 25) + '...' : desc;
+      }),
+      datasets: [{
+        label: 'Price (₹)',
+        data: bottomExpensive.map(item => parseFloat(item.price)),
         backgroundColor: '#10b981'
       }]
     },
@@ -426,31 +865,235 @@ function createPriceCharts() {
         legend: {
           display: false
         }
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Price (₹)'
+          }
+        }
       }
     }
   });
 }
 
+// Populate Unit Filter
+function populateUnitFilter() {
+  const unitFilter = document.getElementById('unitFilter');
+  unitFilter.innerHTML = '<option value="">Filter by Unit</option>';
+  
+  const units = [...new Set(inventoryData.map(item => item.unit).filter(Boolean))];
+  units.sort();
+  
+  units.forEach(unit => {
+    const option = document.createElement('option');
+    option.value = unit;
+    option.textContent = unit;
+    unitFilter.appendChild(option);
+  });
+}
+
 // Populate Data Table
 function populateDataTable() {
+  filteredData = [...inventoryData];
+  updateTable();
+}
+
+// Update Table with filtered data
+function updateTable() {
   const tbody = document.getElementById('tableBody');
-  inventoryData.forEach(item => {
+  tbody.innerHTML = ''; // Clear existing rows
+  
+  filteredData.forEach(item => {
     const row = tbody.insertRow();
+    const price = parseFloat(item.price) || 0;
+    
+    // Determine price range for coloring
+    let priceRange = '';
+    let priceClass = '';
+    if (price === 0) {
+      priceRange = 'No Price';
+      priceClass = 'no-price';
+    } else if (price <= 5) {
+      priceRange = '₹0-5';
+      priceClass = 'low-price';
+    } else if (price <= 10) {
+      priceRange = '₹6-10';
+      priceClass = 'medium-price';
+    } else if (price <= 50) {
+      priceRange = '₹11-50';
+      priceClass = 'high-price';
+    } else {
+      priceRange = '₹50+';
+      priceClass = 'very-high-price';
+    }
+    
     row.innerHTML = `
-      <td>${item.code}</td>
-      <td>${item.description}</td>
-      <td>${item.unit}</td>
-      <td>${item.barcode}</td>
-      <td>₹${item.price}</td>
+      <td><strong>${item.code || 'N/A'}</strong></td>
+      <td>${item.description || 'No Description'}</td>
+      <td><span class="unit-badge">${item.unit || 'N/A'}</span></td>
+      <td><small>${item.barcode || 'No Barcode'}</small></td>
+      <td class="price-cell ${priceClass}"><strong>₹${price.toFixed(2)}</strong></td>
+      <td><span class="price-range ${priceClass}">${priceRange}</span></td>
     `;
   });
+  
+  // Update table count
+  document.getElementById('tableCount').textContent = `(${filteredData.length} items)`;
+  
+  // Add CSS for price styling
+  if (!document.querySelector('#table-styles')) {
+    const style = document.createElement('style');
+    style.id = 'table-styles';
+    style.textContent = `
+      .unit-badge {
+        background: #e5e7eb;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .price-cell {
+        font-weight: 700;
+      }
+      .price-range {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .no-price {
+        color: #9ca3af;
+        background: #f3f4f6;
+      }
+      .low-price {
+        color: #059669;
+        background: #d1fae5;
+      }
+      .medium-price {
+        color: #d97706;
+        background: #fef3c7;
+      }
+      .high-price {
+        color: #dc2626;
+        background: #fee2e2;
+      }
+      .very-high-price {
+        color: #7c3aed;
+        background: #ede9fe;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+}
+
+// Filter Table
+function filterTable() {
+  const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+  const priceFilter = document.getElementById('priceFilter').value;
+  const unitFilter = document.getElementById('unitFilter').value;
+  const sortBy = document.getElementById('sortBy').value;
+  
+  filteredData = inventoryData.filter(item => {
+    // Search filter
+    const matchesSearch = !searchTerm || 
+      (item.code && item.code.toLowerCase().includes(searchTerm)) ||
+      (item.description && item.description.toLowerCase().includes(searchTerm)) ||
+      (item.barcode && item.barcode.toLowerCase().includes(searchTerm));
+    
+    // Price filter
+    const price = parseFloat(item.price) || 0;
+    let matchesPrice = true;
+    if (priceFilter) {
+      switch(priceFilter) {
+        case '0-5': matchesPrice = price <= 5; break;
+        case '6-10': matchesPrice = price >= 6 && price <= 10; break;
+        case '11-20': matchesPrice = price >= 11 && price <= 20; break;
+        case '21-50': matchesPrice = price >= 21 && price <= 50; break;
+        case '51-100': matchesPrice = price >= 51 && price <= 100; break;
+        case '100+': matchesPrice = price > 100; break;
+      }
+    }
+    
+    // Unit filter
+    const matchesUnit = !unitFilter || item.unit === unitFilter;
+    
+    return matchesSearch && matchesPrice && matchesUnit;
+  });
+  
+  // Sorting
+  if (sortBy) {
+    filteredData.sort((a, b) => {
+      const priceA = parseFloat(a.price) || 0;
+      const priceB = parseFloat(b.price) || 0;
+      
+      switch(sortBy) {
+        case 'price-desc':
+          return priceB - priceA;
+        case 'price-asc':
+          return priceA - priceB;
+        case 'code':
+          return (a.code || '').localeCompare(b.code || '');
+        case 'description':
+          return (a.description || '').localeCompare(b.description || '');
+        default:
+          return 0;
+      }
+    });
+  }
+  
+  updateTable();
+}
+
+// Clear Filters
+function clearFilters() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('priceFilter').value = '';
+  document.getElementById('unitFilter').value = '';
+  document.getElementById('sortBy').value = '';
+  filteredData = [...inventoryData];
+  updateTable();
+}
+
+// Export to Excel
+function exportToExcel() {
+  try {
+    const data = filteredData.map(item => ({
+      'Code': item.code || '',
+      'Description': item.description || '',
+      'Unit': item.unit || '',
+      'Barcode': item.barcode || '',
+      'Price': parseFloat(item.price) || 0
+    }));
+    
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Inventory');
+    
+    // Auto-size columns
+    const wscols = [
+      {wch: 15}, // Code
+      {wch: 50}, // Description
+      {wch: 10}, // Unit
+      {wch: 20}, // Barcode
+      {wch: 15}  // Price
+    ];
+    ws['!cols'] = wscols;
+    
+    XLSX.writeFile(wb, `inventory_data_${new Date().toISOString().split('T')[0]}.xlsx`);
+  } catch (error) {
+    console.error('Export error:', error);
+    alert('Error exporting to Excel: ' + error.message);
+  }
 }
 
 // Tab Switching
 function showTab(tabName) {
   // Hide all containers
   document.querySelectorAll('.graph-container').forEach(container => {
-    container.classList.remove('active');
+    container.style.display = 'none';
   });
 
   // Remove active class from all buttons
@@ -459,16 +1102,36 @@ function showTab(tabName) {
   });
 
   // Show selected container
-  document.getElementById(tabName).classList.add('active');
+  const tabElement = document.getElementById(tabName);
+  if (tabElement) {
+    tabElement.style.display = 'block';
+  }
 
   // Add active class to clicked button
-  if (window.event && window.event.target) {
-    window.event.target.classList.add('active');
-  }
+  const buttons = document.querySelectorAll('.tab-btn');
+  buttons.forEach(btn => {
+    if (btn.onclick && btn.onclick.toString().includes(tabName)) {
+      btn.classList.add('active');
+    }
+  });
+}
+
+// Refresh Data
+function refreshData() {
+  fetchInventoryData();
 }
 
 // Initialize on load
-window.onload = init;
+window.onload = function() {
+  fetchInventoryData();
+  
+  // Add event listener for Enter key in search
+  document.getElementById('searchInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      filterTable();
+    }
+  });
+};
 </script>
 
 </body>
