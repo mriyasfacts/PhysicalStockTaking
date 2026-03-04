@@ -201,39 +201,151 @@ body{
 
 <script>
 /* ================= CONFIG ================= */
-const API_URL =
-  'https://script.google.com/macros/s/AKfycbwnhbFXg91ieAk4FMJa8_nVUaKaGmhFFk8UxQQ9tlRDZEBFOBUaOEp-Fm7n1y-gjPfo7w/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbz2EfT4PuEFJZEX-_KoDIcKuZM4luk7c0JKByMPfTC9EGZh2u9cGkrC-Xezi94haVaWXA/exec';
+
+/* ================= AUTHENTICATION HANDLING ================= */
+// Check authentication status on page load
+async function checkAuth() {
+  try {
+    // Try to fetch with credentials to check auth status
+    const response = await fetch(API_URL + '?action=check', {
+      method: 'GET',
+      credentials: 'include', // CRITICAL: This sends Google auth cookies
+      mode: 'cors'
+    });
+    
+    const data = await response.json();
+    
+    // Check if authentication is required
+    if (data.requiresAuth) {
+      showAuthRequired(data.message || 'Please sign in with your Google account');
+      return false;
+    }
+    
+    // Check if user is unauthorized
+    if (data.status === 'error' && data.message.includes('Unauthorized')) {
+      showUnauthorized(data.userEmail);
+      return false;
+    }
+    
+    // If we have user email in response, we're authenticated
+    if (data.authenticatedUser || (data.status === 'success' && data.data)) {
+      return true;
+    }
+    
+    return true; // Assume authenticated if no error
+    
+  } catch (err) {
+    console.error('Auth check error:', err);
+    // Don't show error here, let loadList handle it
+    return false;
+  }
+}
+
+function showAuthRequired(message) {
+  const list = document.getElementById('list');
+  list.innerHTML = `
+    <div class="message info" style="background: #fef3c7; border-left-color: #f59e0b;">
+      <h3>🔐 Google Authentication Required</h3>
+      <p>${message || 'Please sign in with your Google account to access this application.'}</p>
+      <div style="margin-top: 1.5rem; text-align: center;">
+        <a href="https://accounts.google.com/Login" target="_blank" 
+           style="background: #3b82f6; color: white; padding: 0.75rem 1.5rem; 
+                  border-radius: 6px; text-decoration: none; display: inline-block;">
+          Sign in with Google
+        </a>
+        <button onclick="window.location.reload()" 
+                style="background: #6b7280; color: white; padding: 0.75rem 1.5rem; 
+                       border-radius: 6px; border: none; cursor: pointer; margin-left: 0.5rem;">
+          Refresh
+        </button>
+      </div>
+      <p style="margin-top: 1rem; font-size: 0.875rem; color: #6b7280;">
+        After signing in, refresh this page.
+      </p>
+      <hr style="margin: 1rem 0;">
+      <p style="font-size: 0.875rem;">
+        <strong>Why am I seeing this?</strong><br>
+        This application requires a valid Google account that is authorized in the system.
+      </p>
+    </div>
+  `;
+  
+  // Hide the add button since user can't add anyway
+  document.querySelector('.add-btn').style.display = 'none';
+}
+
+function showUnauthorized(email) {
+  const list = document.getElementById('list');
+  list.innerHTML = `
+    <div class="message" style="background: #fee2e2; border-left-color: #ef4444;">
+      <h3>⛔ Access Denied</h3>
+      <p>Your Google account <strong>${email || 'unknown'}</strong> is not authorized to access this application.</p>
+      <p style="margin-top: 1rem;">Please contact the administrator to request access.</p>
+      <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem; justify-content: center;">
+        <button onclick="signOutAndRefresh()" 
+                style="background: #6b7280; color: white; border: none; 
+                       padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+          Sign out and try another account
+        </button>
+        <button onclick="window.location.reload()" 
+                style="background: #3b82f6; color: white; border: none; 
+                       padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+          Refresh
+        </button>
+      </div>
+    </div>
+  `;
+  
+  // Hide the add button
+  document.querySelector('.add-btn').style.display = 'none';
+}
+
+function signOutAndRefresh() {
+  // Redirect to Google signout
+  window.location.href = 'https://accounts.google.com/Logout';
+  setTimeout(() => {
+    window.location.reload();
+  }, 2000);
+}
 
 /* ================= HELPERS ================= */
 function parseStock(str) {
+  if (!str) return [];
   return str.replaceAll('),(', ')|(')
     .replaceAll('(', '')
     .replaceAll(')', '')
     .split('|')
     .map(s => {
       const [code, unit, qty] = s.split(',');
-      return { code, unit, qty };
+      return { code: code || '', unit: unit || '', qty: qty || '' };
     });
 }
 
 function toggle(id) {
-  document.getElementById(id).classList.toggle('hidden');
+  const element = document.getElementById(id);
+  if (element) {
+    element.classList.toggle('hidden');
+  }
 }
 
-/* ✅ NEW: Display Error Message */
 function showError(message, userEmail = '') {
   const list = document.getElementById('list');
   list.innerHTML = `
     <div class="message">
-      <h3>⚠️ Access Denied</h3>
+      <h3>⚠️ Error</h3>
       <p>${message}</p>
       ${userEmail ? `<p style="margin-top:0.5rem"><strong>Your email:</strong> ${userEmail}</p>` : ''}
-      <p style="margin-top:0.5rem">Please contact the administrator to grant you access.</p>
+      <p style="margin-top:0.5rem">Please try again or contact support.</p>
+      <button onclick="window.location.reload()" 
+              style="margin-top: 1rem; background: #3b82f6; color: white; border: none; 
+                     padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+        Refresh Page
+      </button>
     </div>
   `;
 }
 
-/* ✅ NEW: Display Info Message */
 function showInfo(message) {
   const list = document.getElementById('list');
   list.innerHTML = `
@@ -255,6 +367,11 @@ async function deleteRecord(recordId, cardElement) {
   try {
     const res = await fetch(API_URL, {
       method: 'POST',
+      mode: 'cors',
+      credentials: 'include', // Include auth cookies
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         action: 'delete',
         recordId
@@ -272,7 +389,7 @@ async function deleteRecord(recordId, cardElement) {
       btn.textContent = 'Delete';
     }
   } catch (err) {
-    alert(err.message);
+    alert('Error: ' + err.message);
     btn.disabled = false;
     btn.textContent = 'Delete';
   }
@@ -280,13 +397,38 @@ async function deleteRecord(recordId, cardElement) {
 
 /* ================= LOAD LIST ================= */
 async function loadList() {
+  const list = document.getElementById('list');
+  list.innerHTML = '<div class="loading">Loading... <br><small>Checking authentication...</small></div>';
+  
   try {
-    const res = await fetch(API_URL);
-    const data = await res.json();
+    // Add cache-busting parameter
+    const url = API_URL + '?t=' + new Date().getTime();
+    
+    const res = await fetch(url, {
+      method: 'GET',
+      mode: 'cors',
+      credentials: 'include', // CRITICAL: This sends Google auth cookies
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
 
-    // ✅ CHECK: Handle error responses from authentication
+    const data = await res.json();
+    console.log('API Response:', data); // For debugging
+
+    // ✅ CHECK: Handle authentication required
+    if (data.requiresAuth) {
+      showAuthRequired(data.message);
+      return;
+    }
+
+    // ✅ CHECK: Handle unauthorized access
     if (data.status === 'error') {
-      showError(data.message, data.userEmail);
+      if (data.message.includes('Unauthorized') || data.message.includes('not authorized')) {
+        showUnauthorized(data.userEmail);
+      } else {
+        showError(data.message, data.userEmail);
+      }
       return;
     }
 
@@ -302,7 +444,10 @@ async function loadList() {
       return;
     }
 
-    const list = document.getElementById('list');
+    // Show user email if available
+    if (data.authenticatedUser) {
+      showUserInfo(data.authenticatedUser);
+    }
 
     // ✅ CHECK: No records found
     if (records.length === 0) {
@@ -320,42 +465,28 @@ async function loadList() {
       list.innerHTML += `
         <div class="card" id="${cardId}">
           <div class="card-header">
-			
-			<div class="field">
-			<label>Document No</label>
-			<p>#${r.Id}</p>
-			</div>
+            <div class="field">
+              <label>Document No</label>
+              <p>#${r.Id || ''}</p>
+            </div>
             <div class="field">
               <label>Date</label>
-              <p>${r.Text1}</p>
+              <p>${r.Text1 || ''}</p>
             </div>
-
             <div class="field">
               <label>Division</label>
-              <p>${r.Text2}</p>
+              <p>${r.Text2 || ''}</p>
             </div>
-
             <div class="field">
               <label>Location</label>
-              <p>${r.Text3}</p>
+              <p>${r.Text3 || ''}</p>
             </div>
-
             <div class="btn-group">
-              <button class="toggle-btn"
-                onclick="toggle('${tableId}')">View</button>
-
-              <button class="edit-btn"
-                onclick="window.location.href='edit-physicalstock.html?recordId=${r.Id}'">
-                Edit
-              </button>
-
-              <button class="delete-btn"
-                onclick="deleteRecord(${r.Id}, document.getElementById('${cardId}'))">
-                Delete
-              </button>
+              <button class="toggle-btn" onclick="toggle('${tableId}')">View</button>
+              <button class="edit-btn" onclick="window.location.href='edit-physicalstock.html?recordId=${r.Id}'">Edit</button>
+              <button class="delete-btn" onclick="deleteRecord(${r.Id}, document.getElementById('${cardId}'))">Delete</button>
             </div>
           </div>
-
           <div id="${tableId}" class="hidden">
             <div class="divider"></div>
             <table class="table">
@@ -367,29 +498,62 @@ async function loadList() {
                 </tr>
               </thead>
               <tbody>
-                ${items.map(it => `
+                ${items.length > 0 ? items.map(it => `
                   <tr>
                     <td>${it.code}</td>
                     <td>${it.unit}</td>
                     <td>${it.qty}</td>
                   </tr>
-                `).join('')}
+                `).join('') : '<tr><td colspan="3">No items</td></tr>'}
               </tbody>
             </table>
           </div>
-
         </div>
       `;
     });
 
   } catch (err) {
-    // ✅ CATCH: Network or other errors
-    showError(`Failed to load data: ${err.message}`);
     console.error('Error loading list:', err);
+    
+    // Check if it's a network error (likely CORS or auth)
+    if (err.message.includes('Failed to fetch')) {
+      showAuthRequired('Unable to connect. Please make sure you are signed in with Google.');
+    } else {
+      showError(`Failed to load data: ${err.message}`);
+    }
   }
 }
 
-document.addEventListener('DOMContentLoaded', loadList);
+function showUserInfo(email) {
+  // Add user info to the page header
+  const header = document.querySelector('.page-header');
+  if (header && !document.getElementById('user-info')) {
+    const userDiv = document.createElement('div');
+    userDiv.id = 'user-info';
+    userDiv.style.cssText = 'font-size: 0.875rem; color: #6b7280; margin-top: 0.5rem;';
+    userDiv.innerHTML = `Logged in as: <strong>${email}</strong>`;
+    header.appendChild(userDiv);
+  }
+}
+
+// Add cache control meta tags
+function addCacheControl() {
+  const meta = document.createElement('meta');
+  meta.httpEquiv = 'Cache-Control';
+  meta.content = 'no-cache, no-store, must-revalidate';
+  document.head.appendChild(meta);
+  
+  const pragma = document.createElement('meta');
+  pragma.httpEquiv = 'Pragma';
+  pragma.content = 'no-cache';
+  document.head.appendChild(pragma);
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  addCacheControl();
+  loadList();
+});
 </script>
 
 </body>
