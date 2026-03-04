@@ -1,120 +1,396 @@
+
+
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Google Auth Test</title>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body { font-family: Arial; padding: 20px; max-width: 600px; margin: 0 auto; }
-    button { padding: 12px 24px; margin: 10px; cursor: pointer; border: none; border-radius: 6px; font-size: 16px; }
-    .google-btn { background: #4285f4; color: white; }
-    .test-btn { background: #34a853; color: white; }
-    pre { background: #f5f5f5; padding: 15px; border-radius: 8px; overflow: auto; }
-    .card { border: 1px solid #ddd; padding: 20px; border-radius: 10px; margin: 20px 0; }
-    .success { color: #0a7e3a; background: #e6f4ea; padding: 10px; border-radius: 5px; }
-    .error { color: #a50e0e; background: #fce8e8; padding: 10px; border-radius: 5px; }
-    .info { color: #0766a5; background: #e5f0fa; padding: 10px; border-radius: 5px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PHYSICAL STOCK TAKING</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:Inter,system-ui,sans-serif;
+  background:#f3f4f6;color:#1f2937
+}
+.container{
+  max-width:1100px;
+  margin:2.5rem auto;
+  padding:0 1rem
+}
+
+/* HEADER */
+.page-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:2rem
+}
+.page-header h1{
+  font-size:1.8rem;
+  font-weight:700
+}
+.add-btn{
+  background:#16a34a;
+  color:#fff;
+  border:none;
+  border-radius:50%;
+  width:44px;
+  height:44px;
+  font-size:1.5rem;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center
+}
+.add-btn:hover{background:#15803d}
+
+/* CARD */
+.card{
+  background:#fff;
+  border-radius:10px;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+  padding:1.25rem;
+  margin-bottom:1.25rem
+}
+
+/* TOP ROW */
+.card-header{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr auto;
+  gap:1rem;
+  align-items:center
+}
+.field label{
+  font-size:.75rem;
+  color:#6b7280;
+  text-transform:uppercase;
+  letter-spacing:.05em
+}
+.field p{
+  font-weight:600;
+  margin-top:.2rem
+}
+
+/* BUTTONS */
+.btn-group{
+  display:flex;
+  gap:.5rem;
+  align-items:center
+}
+.toggle-btn{
+  background:#3b82f6;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  padding:.5rem .9rem;
+  cursor:pointer;
+  font-size:.9rem
+}
+.toggle-btn:hover{background:#2563eb}
+
+.edit-btn{
+  background:#f59e0b;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  padding:.5rem .9rem;
+  cursor:pointer;
+  font-size:.9rem
+}
+.edit-btn:hover{background:#d97706}
+
+.delete-btn{
+  background:#ef4444;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  padding:.5rem .9rem;
+  cursor:pointer;
+  font-size:.9rem
+}
+.delete-btn:hover{background:#dc2626}
+.delete-btn:disabled{
+  background:#9ca3af;
+  cursor:not-allowed
+}
+
+/* DIVIDER */
+.divider{
+  height:1px;
+  background:#e5e7eb;
+  margin:1rem 0
+}
+
+/* TABLE */
+.table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:.5rem
+}
+.table th,.table td{
+  border:1px solid #e5e7eb;
+  padding:.5rem;
+  text-align:center;
+  font-size:.9rem
+}
+.table th{
+  background:#f9fafb;
+  font-weight:600
+}
+
+.hidden{display:none}
+
+/* ✅ NEW: Error/Info Messages */
+.message{
+  background:#fee2e2;
+  border-left:4px solid #ef4444;
+  padding:1rem;
+  border-radius:6px;
+  margin-bottom:1rem
+}
+.message.info{
+  background:#dbeafe;
+  border-left-color:#3b82f6
+}
+.message h3{
+  font-size:1rem;
+  margin-bottom:.5rem
+}
+
+/* ✅ NEW: Loading State */
+.loading{
+  text-align:center;
+  padding:2rem;
+  color:#6b7280
+}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .card-header{
+    grid-template-columns:1fr;
+  }
+  .btn-group{
+    width:100%;
+  }
+  .toggle-btn,.edit-btn,.delete-btn{
+    flex:1
+  }
+}
+</style>
 </head>
+
 <body>
-  <h1>🔐 Google Authentication Test</h1>
-  <p>Hosted on: <strong>GitHub Pages</strong></p>
-  
-  <div class="card">
-    <h3>Step 1: Sign in with Google</h3>
-    <button class="google-btn" onclick="signInWithGoogle()">Sign in with Google</button>
-    <p><small>Opens Google sign-in page in a new tab</small></p>
+
+<div class="container">
+
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <h1>PHYSICAL STOCK TAKING</h1>
+    <button class="add-btn"
+      title="New Physical Stock Taking"
+      onclick="window.location.href='new-physicalstock.html'">+</button>
   </div>
 
-  <div class="card">
-    <h3>Step 2: Test Authentication</h3>
-    <button class="test-btn" onclick="testAuth()">Test My Login Status</button>
-    <p><small>After signing in, click here to check</small></p>
+  <!-- LIST -->
+  <div id="list">
+    <div class="loading">Loading...</div>
   </div>
 
-  <div id="status"></div>
-  <h3>Response:</h3>
-  <pre id="result">Click test to check status</pre>
+</div>
 
-  <script>
-    // IMPORTANT: Replace with your actual Apps Script URL
-    const API_URL = 'https://script.google.com/macros/s/AKfycbxLR2tAbq38EmKusPp9hitVEpepMGF2tgJ3etY7ZHMqwNslMV1reKoO7QSRhYS1rRGtTQ/exec';
-    
-    function signInWithGoogle() {
-      window.open('https://accounts.google.com/Login', '_blank');
-      showStatus('info', 'Please sign in with Google in the new tab, then come back and click "Test My Login Status"');
+<script>
+/* ================= CONFIG ================= */
+const API_URL =
+  'https://script.google.com/macros/s/AKfycbzGVv_vG6FRqaU4VerEjwew_Zi9deM2HE0kVxDE4dHEflg0J32uxx81lZVv1NMM3dYUbg/exec';
+
+/* ================= HELPERS ================= */
+function parseStock(str) {
+  return str.replaceAll('),(', ')|(')
+    .replaceAll('(', '')
+    .replaceAll(')', '')
+    .split('|')
+    .map(s => {
+      const [code, unit, qty] = s.split(',');
+      return { code, unit, qty };
+    });
+}
+
+function toggle(id) {
+  document.getElementById(id).classList.toggle('hidden');
+}
+
+/* ✅ NEW: Display Error Message */
+function showError(message, userEmail = '') {
+  const list = document.getElementById('list');
+  list.innerHTML = `
+    <div class="message">
+      <h3>⚠️ Access Denied</h3>
+      <p>${message}</p>
+      ${userEmail ? `<p style="margin-top:0.5rem"><strong>Your email:</strong> ${userEmail}</p>` : ''}
+      <p style="margin-top:0.5rem">Please contact the administrator to grant you access.</p>
+    </div>
+  `;
+}
+
+/* ✅ NEW: Display Info Message */
+function showInfo(message) {
+  const list = document.getElementById('list');
+  list.innerHTML = `
+    <div class="message info">
+      <h3>ℹ️ Information</h3>
+      <p>${message}</p>
+    </div>
+  `;
+}
+
+/* ================= DELETE ================= */
+async function deleteRecord(recordId, cardElement) {
+  if (!confirm('Are you sure you want to delete this record?')) return;
+
+  const btn = cardElement.querySelector('.delete-btn');
+  btn.disabled = true;
+  btn.textContent = 'Deleting...';
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'delete',
+        recordId
+      })
+    });
+
+    const j = await res.json();
+
+    if (j.status === 'success') {
+      cardElement.style.opacity = '0';
+      setTimeout(() => cardElement.remove(), 300);
+    } else {
+      alert(j.message || 'Delete failed');
+      btn.disabled = false;
+      btn.textContent = 'Delete';
     }
-    
-    function showStatus(type, message) {
-      const statusDiv = document.getElementById('status');
-      statusDiv.innerHTML = `<div class="${type}">${message}</div>`;
+  } catch (err) {
+    alert(err.message);
+    btn.disabled = false;
+    btn.textContent = 'Delete';
+  }
+}
+
+/* ================= LOAD LIST ================= */
+async function loadList() {
+  try {
+    const res = await fetch(API_URL);
+    const data = await res.json();
+
+    // ✅ CHECK: Handle error responses from authentication
+    if (data.status === 'error') {
+      showError(data.message, data.userEmail);
+      return;
     }
-    
-    async function testAuth() {
-      const resultDiv = document.getElementById('result');
-      
-      showStatus('info', '⏳ Checking authentication...');
-      resultDiv.textContent = 'Loading...';
-      
-      try {
-        // Use JSONP approach (works with GitHub Pages)
-        const data = await jsonpRequest(API_URL);
-        console.log('Response:', data);
-        
-        resultDiv.textContent = JSON.stringify(data, null, 2);
-        
-        if (data.email) {
-          showStatus('success', `✅ Success! Logged in as: <strong>${data.email}</strong>`);
-        } else {
-          showStatus('error', '❌ Not logged in. Please sign in with Google first.');
-        }
-        
-      } catch (err) {
-        console.error('Error:', err);
-        showStatus('error', `❌ Error: ${err.message}`);
-        resultDiv.textContent = err.toString();
-      }
+
+    // ✅ CHECK: Handle successful response with data array
+    let records;
+    if (data.status === 'success' && Array.isArray(data.data)) {
+      records = data.data;
+    } else if (Array.isArray(data)) {
+      // Legacy format (array directly)
+      records = data;
+    } else {
+      showError('Unexpected data format received from server');
+      return;
     }
-    
-    function jsonpRequest(url) {
-      return new Promise((resolve, reject) => {
-        const callbackName = 'callback_' + Date.now();
-        const script = document.createElement('script');
-        
-        // Set timeout
-        const timeout = setTimeout(() => {
-          cleanup();
-          reject(new Error('Request timeout - check if URL is correct'));
-        }, 10000);
-        
-        function cleanup() {
-          clearTimeout(timeout);
-          delete window[callbackName];
-          if (script.parentNode) {
-            script.parentNode.removeChild(script);
-          }
-        }
-        
-        // Define callback function
-        window[callbackName] = function(data) {
-          cleanup();
-          resolve(data);
-        };
-        
-        // Handle errors
-        script.onerror = function() {
-          cleanup();
-          reject(new Error('Failed to load script - check URL and CORS'));
-        };
-        
-        // Append script to head
-        script.src = url + '?callback=' + callbackName;
-        document.head.appendChild(script);
-      });
+
+    const list = document.getElementById('list');
+
+    // ✅ CHECK: No records found
+    if (records.length === 0) {
+      showInfo('No stock taking records found. Click the + button to create one.');
+      return;
     }
-    
-    // Auto-check on page load
-    window.addEventListener('load', testAuth);
-  </script>
+
+    list.innerHTML = '';
+
+    records.forEach((r, i) => {
+      const items = parseStock(r.Text4);
+      const tableId = `items_${i}`;
+      const cardId = `card_${i}`;
+
+      list.innerHTML += `
+        <div class="card" id="${cardId}">
+          <div class="card-header">
+			
+			<div class="field">
+			<label>Document No</label>
+			<p>#${r.Id}</p>
+			</div>
+            <div class="field">
+              <label>Date</label>
+              <p>${r.Text1}</p>
+            </div>
+
+            <div class="field">
+              <label>Division</label>
+              <p>${r.Text2}</p>
+            </div>
+
+            <div class="field">
+              <label>Location</label>
+              <p>${r.Text3}</p>
+            </div>
+
+            <div class="btn-group">
+              <button class="toggle-btn"
+                onclick="toggle('${tableId}')">View</button>
+
+              <button class="edit-btn"
+                onclick="window.location.href='edit-physicalstock.html?recordId=${r.Id}'">
+                Edit
+              </button>
+
+              <button class="delete-btn"
+                onclick="deleteRecord(${r.Id}, document.getElementById('${cardId}'))">
+                Delete
+              </button>
+            </div>
+          </div>
+
+          <div id="${tableId}" class="hidden">
+            <div class="divider"></div>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Item Code</th>
+                  <th>Unit</th>
+                  <th>Qty</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${items.map(it => `
+                  <tr>
+                    <td>${it.code}</td>
+                    <td>${it.unit}</td>
+                    <td>${it.qty}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      `;
+    });
+
+  } catch (err) {
+    // ✅ CATCH: Network or other errors
+    showError(`Failed to load data: ${err.message}`);
+    console.error('Error loading list:', err);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadList);
+</script>
+
 </body>
 </html>
