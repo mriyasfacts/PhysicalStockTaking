@@ -1,560 +1,90 @@
-
-
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PHYSICAL STOCK TAKING</title>
-
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{
-  font-family:Inter,system-ui,sans-serif;
-  background:#f3f4f6;color:#1f2937
-}
-.container{
-  max-width:1100px;
-  margin:2.5rem auto;
-  padding:0 1rem
-}
-
-/* HEADER */
-.page-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:2rem
-}
-.page-header h1{
-  font-size:1.8rem;
-  font-weight:700
-}
-.add-btn{
-  background:#16a34a;
-  color:#fff;
-  border:none;
-  border-radius:50%;
-  width:44px;
-  height:44px;
-  font-size:1.5rem;
-  cursor:pointer;
-  display:flex;
-  align-items:center;
-  justify-content:center
-}
-.add-btn:hover{background:#15803d}
-
-/* CARD */
-.card{
-  background:#fff;
-  border-radius:10px;
-  box-shadow:0 2px 8px rgba(0,0,0,.08);
-  padding:1.25rem;
-  margin-bottom:1.25rem
-}
-
-/* TOP ROW */
-.card-header{
-  display:grid;
-  grid-template-columns:1fr 1fr 1fr auto;
-  gap:1rem;
-  align-items:center
-}
-.field label{
-  font-size:.75rem;
-  color:#6b7280;
-  text-transform:uppercase;
-  letter-spacing:.05em
-}
-.field p{
-  font-weight:600;
-  margin-top:.2rem
-}
-
-/* BUTTONS */
-.btn-group{
-  display:flex;
-  gap:.5rem;
-  align-items:center
-}
-.toggle-btn{
-  background:#3b82f6;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  padding:.5rem .9rem;
-  cursor:pointer;
-  font-size:.9rem
-}
-.toggle-btn:hover{background:#2563eb}
-
-.edit-btn{
-  background:#f59e0b;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  padding:.5rem .9rem;
-  cursor:pointer;
-  font-size:.9rem
-}
-.edit-btn:hover{background:#d97706}
-
-.delete-btn{
-  background:#ef4444;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  padding:.5rem .9rem;
-  cursor:pointer;
-  font-size:.9rem
-}
-.delete-btn:hover{background:#dc2626}
-.delete-btn:disabled{
-  background:#9ca3af;
-  cursor:not-allowed
-}
-
-/* DIVIDER */
-.divider{
-  height:1px;
-  background:#e5e7eb;
-  margin:1rem 0
-}
-
-/* TABLE */
-.table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:.5rem
-}
-.table th,.table td{
-  border:1px solid #e5e7eb;
-  padding:.5rem;
-  text-align:center;
-  font-size:.9rem
-}
-.table th{
-  background:#f9fafb;
-  font-weight:600
-}
-
-.hidden{display:none}
-
-/* ✅ NEW: Error/Info Messages */
-.message{
-  background:#fee2e2;
-  border-left:4px solid #ef4444;
-  padding:1rem;
-  border-radius:6px;
-  margin-bottom:1rem
-}
-.message.info{
-  background:#dbeafe;
-  border-left-color:#3b82f6
-}
-.message h3{
-  font-size:1rem;
-  margin-bottom:.5rem
-}
-
-/* ✅ NEW: Loading State */
-.loading{
-  text-align:center;
-  padding:2rem;
-  color:#6b7280
-}
-
-/* RESPONSIVE */
-@media(max-width:768px){
-  .card-header{
-    grid-template-columns:1fr;
-  }
-  .btn-group{
-    width:100%;
-  }
-  .toggle-btn,.edit-btn,.delete-btn{
-    flex:1
-  }
-}
-</style>
+  <title>Google Auth Test</title>
+  <style>
+    body { font-family: Arial; padding: 20px; max-width: 600px; margin: 0 auto; }
+    button { padding: 10px 20px; background: #4285f4; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    pre { background: #f5f5f5; padding: 10px; border-radius: 4px; overflow: auto; }
+    .status { padding: 10px; margin: 10px 0; border-radius: 4px; }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+    .info { background: #e7f3ff; color: #004085; }
+  </style>
 </head>
-
 <body>
-
-<div class="container">
-
-  <!-- PAGE HEADER -->
-  <div class="page-header">
-    <h1>PHYSICAL STOCK TAKING</h1>
-    <button class="add-btn"
-      title="New Physical Stock Taking"
-      onclick="window.location.href='new-physicalstock.html'">+</button>
-  </div>
-
-  <!-- LIST -->
-  <div id="list">
-    <div class="loading">Loading...</div>
-  </div>
-
-</div>
-
-<script>
-/* ================= CONFIG ================= */
-const API_URL = 'https://script.google.com/macros/s/AKfycbz2EfT4PuEFJZEX-_KoDIcKuZM4luk7c0JKByMPfTC9EGZh2u9cGkrC-Xezi94haVaWXA/exec';
-
-/* ================= AUTHENTICATION HANDLING ================= */
-// Check authentication status on page load
-async function checkAuth() {
-  try {
-    // Try to fetch with credentials to check auth status
-    const response = await fetch(API_URL + '?action=check', {
-      method: 'GET',
-      credentials: 'include', // CRITICAL: This sends Google auth cookies
-      mode: 'cors'
-    });
-    
-    const data = await response.json();
-    
-    // Check if authentication is required
-    if (data.requiresAuth) {
-      showAuthRequired(data.message || 'Please sign in with your Google account');
-      return false;
-    }
-    
-    // Check if user is unauthorized
-    if (data.status === 'error' && data.message.includes('Unauthorized')) {
-      showUnauthorized(data.userEmail);
-      return false;
-    }
-    
-    // If we have user email in response, we're authenticated
-    if (data.authenticatedUser || (data.status === 'success' && data.data)) {
-      return true;
-    }
-    
-    return true; // Assume authenticated if no error
-    
-  } catch (err) {
-    console.error('Auth check error:', err);
-    // Don't show error here, let loadList handle it
-    return false;
-  }
-}
-
-function showAuthRequired(message) {
-  const list = document.getElementById('list');
-  list.innerHTML = `
-    <div class="message info" style="background: #fef3c7; border-left-color: #f59e0b;">
-      <h3>🔐 Google Authentication Required</h3>
-      <p>${message || 'Please sign in with your Google account to access this application.'}</p>
-      <div style="margin-top: 1.5rem; text-align: center;">
-        <a href="https://accounts.google.com/Login" target="_blank" 
-           style="background: #3b82f6; color: white; padding: 0.75rem 1.5rem; 
-                  border-radius: 6px; text-decoration: none; display: inline-block;">
-          Sign in with Google
-        </a>
-        <button onclick="window.location.reload()" 
-                style="background: #6b7280; color: white; padding: 0.75rem 1.5rem; 
-                       border-radius: 6px; border: none; cursor: pointer; margin-left: 0.5rem;">
-          Refresh
-        </button>
-      </div>
-      <p style="margin-top: 1rem; font-size: 0.875rem; color: #6b7280;">
-        After signing in, refresh this page.
-      </p>
-      <hr style="margin: 1rem 0;">
-      <p style="font-size: 0.875rem;">
-        <strong>Why am I seeing this?</strong><br>
-        This application requires a valid Google account that is authorized in the system.
-      </p>
-    </div>
-  `;
+  <h1>🔐 Google Authentication Test</h1>
   
-  // Hide the add button since user can't add anyway
-  document.querySelector('.add-btn').style.display = 'none';
-}
-
-function showUnauthorized(email) {
-  const list = document.getElementById('list');
-  list.innerHTML = `
-    <div class="message" style="background: #fee2e2; border-left-color: #ef4444;">
-      <h3>⛔ Access Denied</h3>
-      <p>Your Google account <strong>${email || 'unknown'}</strong> is not authorized to access this application.</p>
-      <p style="margin-top: 1rem;">Please contact the administrator to request access.</p>
-      <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem; justify-content: center;">
-        <button onclick="signOutAndRefresh()" 
-                style="background: #6b7280; color: white; border: none; 
-                       padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
-          Sign out and try another account
-        </button>
-        <button onclick="window.location.reload()" 
-                style="background: #3b82f6; color: white; border: none; 
-                       padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
-          Refresh
-        </button>
-      </div>
-    </div>
-  `;
+  <div id="status" class="status info">Click the button to test authentication</div>
   
-  // Hide the add button
-  document.querySelector('.add-btn').style.display = 'none';
-}
-
-function signOutAndRefresh() {
-  // Redirect to Google signout
-  window.location.href = 'https://accounts.google.com/Logout';
-  setTimeout(() => {
-    window.location.reload();
-  }, 2000);
-}
-
-/* ================= HELPERS ================= */
-function parseStock(str) {
-  if (!str) return [];
-  return str.replaceAll('),(', ')|(')
-    .replaceAll('(', '')
-    .replaceAll(')', '')
-    .split('|')
-    .map(s => {
-      const [code, unit, qty] = s.split(',');
-      return { code: code || '', unit: unit || '', qty: qty || '' };
-    });
-}
-
-function toggle(id) {
-  const element = document.getElementById(id);
-  if (element) {
-    element.classList.toggle('hidden');
-  }
-}
-
-function showError(message, userEmail = '') {
-  const list = document.getElementById('list');
-  list.innerHTML = `
-    <div class="message">
-      <h3>⚠️ Error</h3>
-      <p>${message}</p>
-      ${userEmail ? `<p style="margin-top:0.5rem"><strong>Your email:</strong> ${userEmail}</p>` : ''}
-      <p style="margin-top:0.5rem">Please try again or contact support.</p>
-      <button onclick="window.location.reload()" 
-              style="margin-top: 1rem; background: #3b82f6; color: white; border: none; 
-                     padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
-        Refresh Page
-      </button>
-    </div>
-  `;
-}
-
-function showInfo(message) {
-  const list = document.getElementById('list');
-  list.innerHTML = `
-    <div class="message info">
-      <h3>ℹ️ Information</h3>
-      <p>${message}</p>
-    </div>
-  `;
-}
-
-/* ================= DELETE ================= */
-async function deleteRecord(recordId, cardElement) {
-  if (!confirm('Are you sure you want to delete this record?')) return;
-
-  const btn = cardElement.querySelector('.delete-btn');
-  btn.disabled = true;
-  btn.textContent = 'Deleting...';
-
-  try {
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      mode: 'cors',
-      credentials: 'include', // Include auth cookies
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        action: 'delete',
-        recordId
-      })
-    });
-
-    const j = await res.json();
-
-    if (j.status === 'success') {
-      cardElement.style.opacity = '0';
-      setTimeout(() => cardElement.remove(), 300);
-    } else {
-      alert(j.message || 'Delete failed');
-      btn.disabled = false;
-      btn.textContent = 'Delete';
-    }
-  } catch (err) {
-    alert('Error: ' + err.message);
-    btn.disabled = false;
-    btn.textContent = 'Delete';
-  }
-}
-
-/* ================= LOAD LIST ================= */
-async function loadList() {
-  const list = document.getElementById('list');
-  list.innerHTML = '<div class="loading">Loading... <br><small>Checking authentication...</small></div>';
+  <button onclick="testAuth()">Test Authentication</button>
+  <button onclick="openDirectLink()" style="background: #34a853;">Open Direct Link</button>
   
-  try {
-    // Add cache-busting parameter
-    const url = API_URL + '?t=' + new Date().getTime();
+  <h3>Response:</h3>
+  <pre id="result">No data yet</pre>
+  
+  <hr>
+  
+  <h3>Instructions:</h3>
+  <ol>
+    <li>Click "Test Authentication" to check via fetch</li>
+    <li>Click "Open Direct Link" to open the API directly in a new tab</li>
+    <li>Check the browser console (F12) for errors</li>
+  </ol>
+
+  <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxXN_WiWMP_xFkMSjUMhAX_zSNhzM_YzF3csZgYeJ0rTQcQyDtFu3uVurNeM-bV-wLosg/exec'; // Replace with your actual URL
     
-    const res = await fetch(url, {
-      method: 'GET',
-      mode: 'cors',
-      credentials: 'include', // CRITICAL: This sends Google auth cookies
-      headers: {
-        'Content-Type': 'application/json',
+    async function testAuth() {
+      const statusDiv = document.getElementById('status');
+      const resultDiv = document.getElementById('result');
+      
+      statusDiv.className = 'status info';
+      statusDiv.innerHTML = '⏳ Testing authentication...';
+      resultDiv.textContent = 'Waiting for response...';
+      
+      try {
+        console.log('Fetching:', API_URL);
+        
+        const response = await fetch(API_URL + '?t=' + Date.now(), {
+          method: 'GET',
+          mode: 'cors',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        console.log('Response status:', response.status);
+        console.log('Response headers:', [...response.headers.entries()]);
+        
+        const data = await response.json();
+        console.log('Response data:', data);
+        
+        resultDiv.textContent = JSON.stringify(data, null, 2);
+        
+        if (data.email && data.email !== 'NO_EMAIL') {
+          statusDiv.className = 'status success';
+          statusDiv.innerHTML = `✅ Success! Logged in as: <strong>${data.email}</strong>`;
+        } else {
+          statusDiv.className = 'status error';
+          statusDiv.innerHTML = '❌ Not logged in with Google. Click "Open Direct Link" to sign in.';
+        }
+        
+      } catch (err) {
+        console.error('Fetch error:', err);
+        statusDiv.className = 'status error';
+        statusDiv.innerHTML = `❌ Error: ${err.message}`;
+        resultDiv.textContent = err.toString();
       }
-    });
-
-    const data = await res.json();
-    console.log('API Response:', data); // For debugging
-
-    // ✅ CHECK: Handle authentication required
-    if (data.requiresAuth) {
-      showAuthRequired(data.message);
-      return;
     }
-
-    // ✅ CHECK: Handle unauthorized access
-    if (data.status === 'error') {
-      if (data.message.includes('Unauthorized') || data.message.includes('not authorized')) {
-        showUnauthorized(data.userEmail);
-      } else {
-        showError(data.message, data.userEmail);
-      }
-      return;
-    }
-
-    // ✅ CHECK: Handle successful response with data array
-    let records;
-    if (data.status === 'success' && Array.isArray(data.data)) {
-      records = data.data;
-    } else if (Array.isArray(data)) {
-      // Legacy format (array directly)
-      records = data;
-    } else {
-      showError('Unexpected data format received from server');
-      return;
-    }
-
-    // Show user email if available
-    if (data.authenticatedUser) {
-      showUserInfo(data.authenticatedUser);
-    }
-
-    // ✅ CHECK: No records found
-    if (records.length === 0) {
-      showInfo('No stock taking records found. Click the + button to create one.');
-      return;
-    }
-
-    list.innerHTML = '';
-
-    records.forEach((r, i) => {
-      const items = parseStock(r.Text4);
-      const tableId = `items_${i}`;
-      const cardId = `card_${i}`;
-
-      list.innerHTML += `
-        <div class="card" id="${cardId}">
-          <div class="card-header">
-            <div class="field">
-              <label>Document No</label>
-              <p>#${r.Id || ''}</p>
-            </div>
-            <div class="field">
-              <label>Date</label>
-              <p>${r.Text1 || ''}</p>
-            </div>
-            <div class="field">
-              <label>Division</label>
-              <p>${r.Text2 || ''}</p>
-            </div>
-            <div class="field">
-              <label>Location</label>
-              <p>${r.Text3 || ''}</p>
-            </div>
-            <div class="btn-group">
-              <button class="toggle-btn" onclick="toggle('${tableId}')">View</button>
-              <button class="edit-btn" onclick="window.location.href='edit-physicalstock.html?recordId=${r.Id}'">Edit</button>
-              <button class="delete-btn" onclick="deleteRecord(${r.Id}, document.getElementById('${cardId}'))">Delete</button>
-            </div>
-          </div>
-          <div id="${tableId}" class="hidden">
-            <div class="divider"></div>
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Item Code</th>
-                  <th>Unit</th>
-                  <th>Qty</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${items.length > 0 ? items.map(it => `
-                  <tr>
-                    <td>${it.code}</td>
-                    <td>${it.unit}</td>
-                    <td>${it.qty}</td>
-                  </tr>
-                `).join('') : '<tr><td colspan="3">No items</td></tr>'}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      `;
-    });
-
-  } catch (err) {
-    console.error('Error loading list:', err);
     
-    // Check if it's a network error (likely CORS or auth)
-    if (err.message.includes('Failed to fetch')) {
-      showAuthRequired('Unable to connect. Please make sure you are signed in with Google.');
-    } else {
-      showError(`Failed to load data: ${err.message}`);
+    function openDirectLink() {
+      window.open(API_URL, '_blank');
     }
-  }
-}
-
-function showUserInfo(email) {
-  // Add user info to the page header
-  const header = document.querySelector('.page-header');
-  if (header && !document.getElementById('user-info')) {
-    const userDiv = document.createElement('div');
-    userDiv.id = 'user-info';
-    userDiv.style.cssText = 'font-size: 0.875rem; color: #6b7280; margin-top: 0.5rem;';
-    userDiv.innerHTML = `Logged in as: <strong>${email}</strong>`;
-    header.appendChild(userDiv);
-  }
-}
-
-// Add cache control meta tags
-function addCacheControl() {
-  const meta = document.createElement('meta');
-  meta.httpEquiv = 'Cache-Control';
-  meta.content = 'no-cache, no-store, must-revalidate';
-  document.head.appendChild(meta);
-  
-  const pragma = document.createElement('meta');
-  pragma.httpEquiv = 'Pragma';
-  pragma.content = 'no-cache';
-  document.head.appendChild(pragma);
-}
-
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
-  addCacheControl();
-  loadList();
-});
-</script>
-
+    
+    // Auto-run test on page load
+    window.addEventListener('load', testAuth);
+  </script>
 </body>
 </html>
